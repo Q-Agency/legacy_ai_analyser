@@ -3,7 +3,7 @@ description: >
   Orchestration rules for the constitution generation pipeline. Apply when user
   requests codebase analysis, constitution generation, AI readiness assessment,
   or brownfield onboarding.
-alwaysApply: false
+alwaysApply: true
 ---
 
 # Constitution Generation Rules
