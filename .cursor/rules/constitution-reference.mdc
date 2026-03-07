@@ -1,0 +1,18 @@
+---
+description: >
+  Inject constitution reference when working on source files. Ensures AI generation
+  always checks project conventions before producing code.
+globs: ["src/**/*.ts", "src/**/*.js", "src/**/*.py", "src/**/*.java", "src/**/*.go"]
+alwaysApply: false
+---
+
+Before generating or modifying code in this project:
+
+1. Check @docs/ai/constitution.md — specifically sections 7 (Coding Conventions),
+   8 (Test Strategy), and 9 (AI Generation Rules)
+2. Verify your output complies with the DO / DO NOT rules in section 9
+3. If working in a domain listed in the Technical Debt Register (section 10):
+   read the AI Risk level and apply counter-instructions accordingly
+4. If working in a Sensitive Zone (section 11): flag for human review before completing
+5. If your generated code introduces a pattern NOT covered by the constitution:
+   note it at the end of your response as "New pattern introduced: <description>"
