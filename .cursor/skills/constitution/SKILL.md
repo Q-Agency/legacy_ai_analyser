@@ -81,9 +81,12 @@ Invoke the `constitution-curator` skill.
 ## Phase 5: Finalise
 
 1. Verify `docs/ai/constitution.md` exists
-2. Report section count and word estimate
-3. Ask: "Would you like to expand any section or re-run specific analysts?"
-4. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
+2. Verify `docs/ai/constitution-cheatsheet.md` exists
+3. Verify `docs/ai/constitution-viewer.html` exists
+4. Report section count and word estimate for constitution and cheat sheet
+5. Report: "Viewer available at docs/ai/constitution-viewer.html — open in browser"
+6. Ask: "Would you like to expand any section or re-run specific analysts?"
+7. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
    (keep `docs/ai/constitution-fragments/` — these are useful for re-runs)
 
 ## Error handling

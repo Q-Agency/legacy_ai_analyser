@@ -20,7 +20,9 @@ This is the document that all future AI generation work will reference.
 2. Also read all `docs/ai/constitution-fragments/*.md` for narrative context
 3. Write `docs/ai/constitution.md` following the template below exactly
 4. For any section with `needs_human_review: true`: add a visible warning block
-5. Report: "Constitution written — <section count> sections, ~<word count> words"
+5. Generate `docs/ai/constitution-cheatsheet.md` — the condensed version for AISDLC agent injection (see Cheat Sheet Template below)
+6. Generate `docs/ai/constitution-viewer.html` — a self-contained interactive viewer (see Viewer Template below)
+7. Report: "Constitution written — <section count> sections, ~<word count> words. Cheat sheet and viewer generated."
 
 ## Template
 
@@ -284,3 +286,228 @@ For each zone: path + reason + what to watch for
 - Auth strategy changed
 - New domain directory added at top level
 - Quarterly refresh regardless
+
+---
+
+## Cheat Sheet Template
+
+After writing the full constitution, generate `docs/ai/constitution-cheatsheet.md` by
+condensing the full constitution into ~500-800 words. This is the default context
+document injected into every AISDLC agent (spec, design, tasks, code, test, review).
+
+The cheat sheet MUST include these sections and nothing else:
+
+```markdown
+# [Project Name] — AI Constitution Cheat Sheet
+
+> Condensed from `docs/ai/constitution.md` (v[version], [date]).
+> This is the default context for all AISDLC agents. For full detail on any
+> section, reference the complete constitution.
+
+## System
+
+[One-line: framework / language / runtime / database / key infrastructure]
+[One-line: what the system is and does]
+[One-line: package manager and module format constraints]
+
+## Architecture
+
+[One-line: architectural style and layer summary]
+[One-line: list all domains by name]
+
+## Critical runtime facts
+
+[3-7 bullet points: the things that will break generated code if ignored.
+ Extract from sections 6 (Runtime) and 11 (Sensitive Zones).
+ Focus on: implicit middleware/interceptors, auth patterns, scoping rules,
+ streaming patterns, anything that is invisible but always active.]
+
+## File structure for new features
+
+[The file template from section 7, condensed to the essential tree]
+
+## Naming
+
+[Condensed naming rules: files, classes, variables, DB fields, events — one line each]
+
+## DO
+
+[All DO rules from section 9, numbered — keep the file references]
+
+## DO NOT
+
+[All DO NOT rules from section 9, numbered — keep the file references]
+
+## Testing
+
+[2-3 lines: framework, location, mocking approach, minimum requirements per feature]
+
+## API conventions
+
+[2-3 lines: style, auth, versioning, pagination, error format, date format]
+
+## HIGH AI-risk debt (will reproduce if not countered)
+
+[Only debt items with AI Risk = HIGH or Critical from section 10.
+ One line per item: ID + location + issue. Skip LOW and MEDIUM AI Risk items.]
+
+## Sensitive zones (require human review)
+
+[One line per zone: path — what to watch for. From section 11.]
+```
+
+### Cheat sheet rules
+
+- Target 500-800 words. If the full constitution has 40 debt items, the cheat sheet
+  should only include the 5-10 with HIGH or Critical AI Risk.
+- Keep file path references — they're the most actionable part.
+- DO and DO NOT rules should be copied verbatim from section 9, not re-summarised.
+- The "Critical runtime facts" section is the highest-value section — these are the
+  things that will silently break generated code. Spend the most care here.
+- Do not include: the full entity map, the full endpoint inventory, the full dependency
+  table, confidence metadata, or analysis gaps. Those live in the full constitution.
+
+---
+
+## Viewer Template
+
+After writing the cheat sheet, generate `docs/ai/constitution-viewer.html` — a single
+self-contained HTML file that renders the constitution as an interactive browsable UI.
+
+### How it works
+
+The viewer embeds constitution data as a JSON object inside a `<script>` tag, then
+renders it with vanilla HTML/CSS/JS. No React, no build step, no external dependencies
+except Google Fonts. Just open the file in a browser.
+
+### Generation instructions
+
+1. Read `.cursor/constitution-tmp/_merged.json` (same data source as the constitution)
+2. Transform the merged data into the `CONSTITUTION_DATA` JSON structure (schema below)
+3. Embed the JSON and the rendering code into a single HTML file
+4. Write to `docs/ai/constitution-viewer.html`
+
+### Data schema
+
+Transform the merged JSON into this structure and embed it as
+`const CONSTITUTION_DATA = { ... }` inside a `<script>` tag:
+
+```javascript
+{
+  projectName: "Project Name",
+  version: "1.0",
+  generated: "YYYY-MM-DD",
+  confidence: "high|medium-high|medium|low",
+  sections: [
+    {
+      id: "identity",        // unique slug for navigation
+      title: "Project Identity",
+      icon: "◆",             // decorative icon for sidebar
+      content: "Markdown-like text content...",
+      // Section-specific fields (only include what applies):
+      domains: [{ name, path, desc, confidence }],           // architecture only
+      dependencies: [{ pkg, ver, role, note }],               // tech stack only
+      constraints: ["constraint text"],                        // tech stack only
+      entities: [{ name, table, relations, note }],           // data model only
+      issues: [{ severity, text }],                           // data model only
+      endpoints: [{ group, needsReview?, routes: [{ method, path, auth, desc }] }],  // api only
+      flows: [{ name, type, entry, steps, sideEffects, preconditions }],  // runtime only
+      globalEffects: ["text"],                                // runtime only
+      aiNotes: ["text"],                                      // runtime only
+      fileTemplate: [{ file, purpose }],                      // conventions only
+      requirements: ["text"],                                 // testing only
+      doRules: ["text"],                                      // ai rules only
+      dontRules: ["text"],                                    // ai rules only
+      checklist: ["text"],                                    // ai rules only
+      items: [{ id, domain, location, issue, severity, aiRisk, action }],  // debt only
+      zones: [{ path, reason, watch }],                       // sensitive only
+      confidenceMap: [{ section, level, note }],              // metadata only
+      gaps: ["text"],                                         // metadata only
+      warning: "Warning text to display at top of section"    // any section
+    }
+  ]
+}
+```
+
+### Section IDs and icons
+
+Use these exact IDs and icons for consistency:
+
+| ID | Title | Icon |
+|----|-------|------|
+| identity | Project Identity | ◆ |
+| architecture | Architecture Overview | ◇ |
+| techstack | Tech Stack Contract | ⬡ |
+| datamodel | Data Model | ◈ |
+| api | API Contract | ↔ |
+| runtime | Runtime Behaviour | ⟳ |
+| conventions | Coding Conventions | § |
+| testing | Test Strategy | ✓ |
+| rules | AI Generation Rules | ⚡ |
+| debt | Technical Debt | ⚠ |
+| sensitive | Sensitive Zones | 🔒 |
+| metadata | Analysis Metadata | ℹ |
+
+### Visual design requirements
+
+The viewer must have:
+
+1. **Dark sidebar** (left, 280px) with:
+   - Project name and metadata header
+   - Search input that filters sections by title and content
+   - Navigation list with icons, section titles, and active state highlighting
+   - Footer with scan metadata
+
+2. **Content area** (right, scrollable) with:
+   - Section title with icon
+   - Rendered content with appropriate visual treatment per section type:
+     - Tables for structured data (entities, dependencies, endpoints, debt)
+     - Color-coded badges for HTTP methods (GET=blue, POST=green, PATCH=yellow, DELETE=red)
+     - Color-coded badges for confidence levels (high=green, medium=amber, low=red)
+     - Color-coded badges for severity levels (HIGH=red, MEDIUM=amber, LOW=grey)
+     - Warning banners (amber) for sections with warnings or [NEEDS REVIEW]
+     - Split-column layout for DO/DO NOT rules (green left, red right)
+     - Flow diagrams with numbered steps, side effects, and preconditions
+     - File template rendered as dark code block
+     - Red-bordered cards for sensitive zones
+
+3. **Typography:** IBM Plex Sans for body, IBM Plex Mono for code/paths. Load from Google Fonts CDN.
+
+4. **Color scheme:** Slate palette. Sidebar: slate-900. Content: slate-50. Tables: alternating slate-50/white.
+
+### HTML structure
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>[Project Name] — AI Constitution Viewer</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* All CSS inline — no external stylesheets */
+  </style>
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar"><!-- sidebar content --></nav>
+    <main id="content"><!-- section content --></main>
+  </div>
+  <script>
+    const CONSTITUTION_DATA = { /* embedded JSON */ };
+    // Vanilla JS rendering code
+  </script>
+</body>
+</html>
+```
+
+### Viewer rules
+
+- The HTML file must be fully self-contained — no external JS, no fetch calls, no build step
+- All CSS must be inline in a `<style>` tag — no external stylesheets (Google Fonts CDN is the only external resource)
+- The file should work when opened directly via `file://` protocol (no server needed)
+- Clicking a section in the sidebar scrolls the content area to the top and renders that section
+- Search should filter sections in real-time as the user types
+- The viewer is read-only — no editing capability needed
+- Target file size: under 50KB for most projects (the embedded JSON is the variable part)
