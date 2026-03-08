@@ -2,11 +2,13 @@
 ## Architecture Guide: Multi-Subagent Brownfield Intelligence Layer
 
 > **Goal:** Analyse a large brownfield codebase inside Cursor IDE and produce a
-> `docs/ai/constitution.md` — a persistent AI-generation contract — using only
-> Cursor-native primitives: Skills, Subagents, Rules, and Hooks.
+> `docs/ai/constitution.md` — a persistent AI-generation contract and current-system
+> truth layer for downstream AI workflows — using only Cursor-native primitives:
+> Skills, Subagents, Rules, and Hooks.
 >
 > This is not a one-time summary tool. It is a **living intelligence layer** that
-> stays accurate as the codebase evolves.
+> stays accurate as the codebase evolves and gives downstream spec, design, task,
+> development, and QA steps a shared brownfield baseline.
 
 ---
 
@@ -20,6 +22,14 @@ aggregate and verify.
 
 This guide implements a **Prepare → Map → Reduce → Audit → Curate** pipeline
 entirely inside Cursor.
+
+The constitution is deliberately upstream of later workflow stages:
+- the constitution captures the current system and its constraints
+- the spec defines **what** should change
+- the design defines **how** the change fits the current system
+
+That distinction is critical for brownfield work. The constitution is not a
+roadmap or product brief; it is the evidence-backed baseline downstream agents use.
 
 ---
 

@@ -25,25 +25,33 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
 ## When invoked
 
 1. Write your status file with `"status": "running"`
-2. Find entry points:
-   - HTTP: `grep -r "app.listen\|server.listen\|bootstrap\|createServer" --include="*.ts" --include="*.js" -l`
-   - CLI: `find . -name "cli.ts" -o -name "cli.js" -o -name "cmd/" | grep -v node_modules`
-   - Background jobs: `grep -r "cron\|schedule\|queue\|worker" --include="*.ts" -l`
-   - Event consumers: `grep -r "subscribe\|consume\|on(" --include="*.ts" -l | head -20`
-3. Trace 2-3 representative request flows end-to-end:
-   - Pick one simple CRUD endpoint
-   - Pick one complex business operation
-   - Pick one event/background job if present
-   For each: read the entry file, follow imports and calls through the layers
-4. Map middleware chain:
-   `grep -r "app.use\|middleware\|guard\|interceptor\|filter" --include="*.ts" -l | head -20`
-   Read each, identify what it does and when it fires
-5. Find side effects per operation type:
+2. Build a deterministic, ignore-aware inventory of possible runtime entrypoints and
+   middleware registration sites using tools that respect `.cursorignore`
+   (prefer `Glob`/`Grep`, not raw shell `find`/`grep` as the primary inventory).
+   Search across the languages present in the repo and sort all discovered paths
+   lexicographically.
+3. Classify the inventory into:
+   - HTTP/bootstrap entrypoints
+   - CLI entrypoints
+   - Background jobs and schedulers
+   - Event consumers and subscribers
+   - Middleware / guards / interceptors / filters
+4. Trace 2-3 representative flows end-to-end using a stable selection strategy:
+   - one simple CRUD/request flow from the first suitable HTTP entrypoint
+   - one complex business flow with visible side effects
+   - one async event/job flow if present
+   If a category is absent, say so explicitly. Do NOT fabricate a flow.
+5. For each chosen flow: read the entry file, then follow imports/calls through the
+   actual layers that execute. Prefer public registration points and shared middleware
+   over arbitrary leaf files.
+6. Map middleware chain by reading the registration sites and every referenced middleware.
+   Do NOT truncate the middleware inventory with `head -20`.
+7. Find side effects per operation type:
    - DB writes: what tables change on a typical POST/PUT?
    - Events emitted: what downstream systems are triggered?
    - External calls: what third-party APIs are called synchronously?
    - Cache invalidation: what gets cleared?
-6. Identify implicit dependencies: things that MUST exist or be in a certain state
+8. Identify implicit dependencies: things that MUST exist or be in a certain state
    for an operation to succeed that are NOT enforced by the type system
 
 ## JSON output — `.cursor/constitution-tmp/runtime-flow.json`
@@ -71,7 +79,9 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
     }
   ],
   "global_side_effects": ["<things that always happen regardless of endpoint>"],
-  "confidence": "high|medium|low"
+  "confidence": "high|medium|low",
+  "coverage_notes": ["<what flow categories were covered, omitted, or unavailable>"],
+  "evidence_files": ["<files that prove the traced flows and middleware chain>"]
 }
 ```
 
@@ -108,3 +118,11 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
 ```
 
 Write both output files, update your status file to `"status": "complete"`, then respond: "runtime-flow-analyst complete"
+
+## Rules
+
+- Use a stable selection strategy for representative flows so reruns on the same codebase
+  produce similar traces
+- If the inventory is large, prioritize registration files, bootstrap files, and the
+  middleware actually wired into those entrypoints rather than sampling arbitrary matches
+- Keep `evidence_files` focused on files that directly prove the runtime behavior claims

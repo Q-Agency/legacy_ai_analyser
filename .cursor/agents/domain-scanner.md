@@ -32,11 +32,25 @@ On fatal error, update it to:
 ## When invoked
 
 1. Write your status file with `"status": "running"`
-2. List files: `find <dir> -type f -not -path "*/node_modules/*" | head -200`
-3. For each major file: read it, identify purpose, exports, dependencies, patterns
-4. Identify the primary responsibility of this domain
-5. Note coupling, violations, technical debt, and unusual patterns
-6. Write both output files (JSON + MD)
+2. Build an ignore-aware file inventory for `<dir>` using discovery tools that respect
+   `.cursorignore` (prefer `Glob`/`Grep`, not raw shell `find` as the primary inventory).
+   The inventory must be stable and sorted lexicographically by path.
+3. Read all boundary files first:
+   - package/runtime manifests (`package.json`, `pyproject.toml`, `go.mod`, etc.)
+   - public entrypoints and re-export files (`index.*`, `main.*`, `app.*`)
+   - route/controller/handler files
+   - schema/config files
+   - local README or architecture notes if present
+4. After boundary files, cover the whole domain deterministically:
+   - If the inventory is small, read all relevant source files
+   - If the inventory is large, do NOT truncate at an arbitrary number
+   - Instead, read every public surface plus representative implementation files from
+     each immediate subdirectory and each distinct file role/pattern discovered
+   - Record what was covered and what was intentionally skipped
+5. For each file read: identify purpose, exports, dependencies, patterns, and cross-domain touchpoints
+6. Identify the primary responsibility of this domain and its boundaries
+7. Note coupling, violations, technical debt, unusual patterns, and any known unknowns
+8. Write both output files (JSON + MD)
 
 ## Workspace context (optional)
 
@@ -78,6 +92,8 @@ The JSON output for grouped scans uses the `packages` array field (see below).
   "confidence": "high|medium|low",
   "files_read": 0,
   "files_skipped": 0,
+  "coverage_notes": ["<how coverage was determined, what was skipped, why>"],
+  "evidence_files": ["<key files that support the main claims>"],
   "workspace_package": null,
   "group_label": null,
   "packages": null
@@ -135,5 +151,7 @@ The JSON output for grouped scans uses the `packages` array field (see below).
 
 - Do NOT summarise more than you've actually read
 - If a file is too large to read fully, note it in technical_debt and files_skipped
-- Confidence = "low" if you couldn't read >50% of files in the dir
+- Confidence = "low" if public entrypoints, schemas, or major subdirectories were not covered
+- Keep `evidence_files` small but concrete: include the specific files that justify the
+  domain responsibility, main patterns, and major risks
 - Write BOTH output files, update your status file to `"status": "complete"`, then respond: "domain-scanner complete: <label>"

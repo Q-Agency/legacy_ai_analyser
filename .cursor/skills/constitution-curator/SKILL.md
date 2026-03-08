@@ -12,7 +12,10 @@ version: 2.1.0
 ## Purpose
 
 Write `docs/ai/constitution.md` from the merged, audited intermediate data.
-This is the document that all future AI generation work will reference.
+This is the document that all future AI generation work will reference as the
+current-state truth layer for downstream spec, design, task composition,
+development, and QA. It describes the system that already exists; it does NOT
+replace product requirements or solution design.
 
 ## Steps
 
@@ -26,10 +29,14 @@ This is the document that all future AI generation work will reference.
 4. Write `docs/ai/constitution.md` following the template below exactly
    - Use today's date as the version in `YYYY.MM.DD` format (e.g., `2026.03.08`)
    - Do NOT hardcode version `1.0`
-5. For any section with `needs_human_review: true`: add a visible warning block
-6. Generate `docs/ai/constitution-cheatsheet.md` — the condensed version for AISDLC agent injection (see Cheat Sheet Template below)
-7. Generate `docs/ai/constitution-viewer.html` — a self-contained interactive viewer (see Viewer Template below)
-8. **Generate changelog (if this is a re-run):**
+5. For EVERY major section, include:
+   - section confidence
+   - evidence sources (specific repo paths or source reports)
+   - downstream use guidance explaining how later agents should consume the section
+6. For any section with `needs_human_review: true`: add a visible warning block
+7. Generate `docs/ai/constitution-cheatsheet.md` — the condensed version for AISDLC agent injection (see Cheat Sheet Template below)
+8. Generate `docs/ai/constitution-viewer.html` — a self-contained interactive viewer (see Viewer Template below)
+9. **Generate changelog (if this is a re-run):**
    - If step 3 found an existing constitution, write `docs/ai/constitution-changelog.md`:
      ```markdown
      # Constitution Changelog
@@ -49,7 +56,7 @@ This is the document that all future AI generation work will reference.
      [Preserve previous changelog entries if docs/ai/constitution-changelog.md already exists]
      ```
    - If this is a first run (no existing constitution), skip the changelog
-9. Report: "Constitution written — <section count> sections, ~<word count> words. Cheat sheet and viewer generated."
+10. Report: "Constitution written — <section count> sections, ~<word count> words. Cheat sheet and viewer generated."
    - If changelog was generated, also report: "Changelog updated with <change count> changes since previous version."
 
 ## Template
@@ -70,6 +77,20 @@ This is the document that all future AI generation work will reference.
 > ⚠️ **Sections marked [NEEDS REVIEW]** contain claims that the auditor could not
 > fully verify or that were contested across multiple reports. Do not treat these
 > as authoritative without human validation.
+
+> **Downstream use:** This document is the current-system truth layer.
+> - Use it during **spec** work to understand existing constraints and integration points
+> - Use it during **design** work to decide HOW a change fits the current architecture
+> - Use it during **tasks/dev/QA** work to preserve established patterns, runtime behaviour, and test expectations
+> - Do NOT treat it as a feature spec or product roadmap
+
+---
+
+For every numbered section below, include this metadata block immediately after the heading:
+
+**Confidence:** [high|medium|low]
+**Evidence sources:** [`<path-or-report>`, `<path-or-report>`]
+**Downstream use:** [how downstream spec/design/tasks/dev/QA should use this section]
 
 ---
 
@@ -100,6 +121,10 @@ This is the document that all future AI generation work will reference.
 | Domain | Path | Responsibility | Confidence |
 |--------|------|----------------|------------|
 [one row per domain from domain-scanner reports]
+
+### Domain boundaries
+[Describe the domain seams that downstream design work must preserve:
+ownership boundaries, allowed cross-domain calls, and where shared abstractions live.]
 
 **Cross-domain communication:** [how domains interact — direct import / events / REST / etc.]
 
@@ -142,6 +167,11 @@ This is the document that all future AI generation work will reference.
 [Describe the standard path: request → controller → service → repository → DB
 and the return path. Be specific about where validation happens, where transactions start.]
 
+### Data invariants
+- [What must always remain true in the data model]
+- [Where referential or business invariants are enforced]
+- [What downstream changes must not violate]
+
 ### Naming conventions
 - Tables: [pattern]
 - Columns: [pattern]
@@ -168,6 +198,10 @@ and the return path. Be specific about where validation happens, where transacti
 - Pagination: [describe the pattern]
 - Dates: [ISO 8601 / Unix timestamp / etc.]
 
+### Integration points
+[List the external and internal contract boundaries that downstream specs/designs must
+respect: public APIs, event schemas, webhook formats, SDK consumers, versioned endpoints.]
+
 ---
 
 ## 6. Runtime Behaviour
@@ -188,6 +222,11 @@ and the return path. Be specific about where validation happens, where transacti
 
 ### Global side effects
 [Things that happen on every request regardless — audit logging, rate limiting, etc.]
+
+### Operational invariants
+- [Middleware or interceptor ordering that must not be broken]
+- [Auth, tenancy, transaction, caching, or streaming rules that are implicit but critical]
+- [Other hidden runtime assumptions downstream implementation must preserve]
 
 ### AI generation note
 > When adding new endpoints or operations:
@@ -221,6 +260,11 @@ and the return path. Be specific about where validation happens, where transacti
 
 **Deployment topology:**
 [Describe how components connect in production — single container, multi-service, serverless, etc.]
+
+### Operational constraints
+- [Deployment/runtime assumptions that shape design choices]
+- [CI/CD, build, or platform requirements downstream tasks must preserve]
+- [Environment or topology limits that make some implementations unsafe]
 
 ### Environment variables
 | Variable | Source | Required | Purpose |
@@ -263,6 +307,10 @@ Result type? Where are errors caught, where are they thrown?]
 ### Logging
 [Library, log levels, what gets logged and where]
 
+### Change-safe extension pattern
+[Describe the safest way to add a new feature in this codebase without breaking existing
+structure. Make this concrete enough that downstream task and implementation agents can follow it.]
+
 ---
 
 ## 9. Test Strategy
@@ -278,6 +326,10 @@ Result type? Where are errors caught, where are they thrown?]
 
 ### Non-negotiable test requirements
 [List what MUST be tested for every new feature — derived from observed patterns]
+
+### Downstream testing expectations
+[Spell out what spec/design/tasks/dev/QA agents should assume:
+minimum test depth, regression expectations, integration risks, and review triggers.]
 
 ---
 
@@ -302,6 +354,11 @@ Examples format:
 
 ### New feature generation checklist
 [Step-by-step, specific to THIS project's actual structure]
+
+### Spec vs design note
+- Use the constitution to understand the existing system and its constraints
+- Let the spec define WHAT should change
+- Let the design define HOW the change fits within the constraints captured here
 
 ---
 
@@ -332,7 +389,7 @@ For each zone: path + reason + what to watch for
 
 ---
 
-## 13. Analysis Metadata
+## 13. Analysis Metadata & Known Unknowns
 
 **Scan date:** [date]
 **Cursor version:** [version]
@@ -345,8 +402,9 @@ For each zone: path + reason + what to watch for
 |---------|------------|-------|
 [one row per major section from audit report]
 
-**Known gaps:**
-[List what this analysis did NOT cover — be honest]
+### Known unknowns and open questions
+[List what this analysis did NOT cover, what remains inferred, and what needs human follow-up.
+Be explicit so downstream agents know where not to over-trust the constitution.]
 
 **Suggested re-analysis triggers:**
 - Major ORM migration added
@@ -371,6 +429,8 @@ The cheat sheet MUST include these sections and nothing else:
 > Condensed from `docs/ai/constitution.md` (v[YYYY.MM.DD]).
 > This is the default context for all AISDLC agents. For full detail on any
 > section, reference the complete constitution.
+> Use it as current-system truth only. The spec defines WHAT; the design defines HOW.
+> If the full constitution marks a section low-confidence or [NEEDS REVIEW], verify it before relying on it.
 
 ## System
 
@@ -392,7 +452,7 @@ The cheat sheet MUST include these sections and nothing else:
 
 ## File structure for new features
 
-[The file template from section 7, condensed to the essential tree]
+[The file template from section 8, condensed to the essential tree]
 
 ## Infrastructure
 
@@ -406,11 +466,11 @@ The cheat sheet MUST include these sections and nothing else:
 
 ## DO
 
-[All DO rules from section 9, numbered — keep the file references]
+[All DO rules from section 10, numbered — keep the file references]
 
 ## DO NOT
 
-[All DO NOT rules from section 9, numbered — keep the file references]
+[All DO NOT rules from section 10, numbered — keep the file references]
 
 ## Testing
 
@@ -422,12 +482,12 @@ The cheat sheet MUST include these sections and nothing else:
 
 ## HIGH AI-risk debt (will reproduce if not countered)
 
-[Only debt items with AI Risk = HIGH or Critical from section 10.
+[Only debt items with AI Risk = HIGH or Critical from section 11.
  One line per item: ID + location + issue. Skip LOW and MEDIUM AI Risk items.]
 
 ## Sensitive zones (require human review)
 
-[One line per zone: path — what to watch for. From section 11.]
+[One line per zone: path — what to watch for. From section 12.]
 ```
 
 ### Cheat sheet rules
@@ -435,11 +495,13 @@ The cheat sheet MUST include these sections and nothing else:
 - Target 500-800 words. If the full constitution has 40 debt items, the cheat sheet
   should only include the 5-10 with HIGH or Critical AI Risk.
 - Keep file path references — they're the most actionable part.
-- DO and DO NOT rules should be copied verbatim from section 9, not re-summarised.
+- DO and DO NOT rules should be copied verbatim from section 10, not re-summarised.
 - The "Critical runtime facts" section is the highest-value section — these are the
   things that will silently break generated code. Spend the most care here.
+- If any full-constitution section is low-confidence or [NEEDS REVIEW], reflect the risk
+  in the most relevant cheat sheet section instead of hiding it.
 - Do not include: the full entity map, the full endpoint inventory, the full dependency
-  table, confidence metadata, or analysis gaps. Those live in the full constitution.
+  table, full confidence tables, or full analysis gaps. Those live in the full constitution.
 
 ---
 

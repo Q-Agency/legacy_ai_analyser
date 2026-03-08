@@ -53,8 +53,18 @@ writes into `docs/ai/constitution.md`.
    - Technical debt register (all issues from all reports, deduplicated, sorted by severity)
    - Sensitive zones (security-relevant files, fragile areas, AI caution zones)
 
+4.5. For every major constitution section in the merged structure, include section metadata:
+   - `confidence`: section-level confidence (`high|medium|low`)
+   - `confidence_reason`: why that confidence level was assigned
+   - `evidence_files`: the most relevant source files or manifests that support the section
+   - `unresolved_gaps`: what is still inferred, missing, or weakly evidenced
+   - `downstream_use`: how downstream spec/design/tasks/dev/QA steps should use the section
+   Keep these grounded in agent evidence (`files_read_list`, report contents, and audit findings),
+   not generic filler text.
+
 5. For every item marked in `sections_to_flag_in_constitution` in the audit report:
-   annotate the merged structure with `"confidence": "low"` and `"needs_human_review": true`
+   annotate the merged structure with `"confidence": "low"` and `"needs_human_review": true`,
+   while preserving the `evidence_files` and `unresolved_gaps` that explain why review is needed
 
 6. Write merged output to `.cursor/constitution-tmp/_merged.json`
 

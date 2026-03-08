@@ -1,7 +1,18 @@
 # Cursor Constitution Generator Kit
 
 A drop-in multi-agent system for Cursor IDE that analyses a brownfield codebase and
-produces `docs/ai/constitution.md` — a persistent AI-generation contract.
+produces `docs/ai/constitution.md` — a persistent AI-generation contract and
+current-system truth layer for downstream AI workflows.
+
+The constitution is meant to ground later stages such as:
+- spec creation (`what` should change)
+- design (`how` the change fits the current system)
+- task composition
+- development
+- QA
+
+It does not replace spec or design. It gives those stages a brownfield baseline
+derived from the existing codebase.
 
 ## What's in the box
 
@@ -58,10 +69,17 @@ Generate a constitution for this codebase
 
 ## What it produces
 
-- `docs/ai/constitution.md` — full 13-section AI generation contract
+- `docs/ai/constitution.md` — full 13-section constitution with section-level confidence,
+  evidence sources, and downstream-use guidance
 - `docs/ai/constitution-cheatsheet.md` — condensed ~500-800 word version for agent context injection
 - `docs/ai/constitution-viewer.html` — self-contained interactive browser UI. Just open the file
 - `docs/ai/constitution-changelog.md` — section-by-section diff when re-running (created on second run and onwards)
+
+## Why this exists
+
+Greenfield projects can start with an intentional constitution from day one.
+Legacy systems cannot. This framework infers the constitution from the existing
+code so downstream AI steps do not start from a blank context window.
 
 ## Pipeline
 

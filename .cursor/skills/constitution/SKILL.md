@@ -33,6 +33,16 @@ section 5 of this architecture guide. If it exists, read it and confirm it cover
 
 If any of those are missing, add them before proceeding.
 
+### 0b.5. Enforce ignore-aware discovery
+
+From this point onward, treat `.cursorignore` as an active contract, not a suggestion:
+
+- Prefer `Glob`, `Grep`, and `Read` style discovery tools because they respect ignore rules
+- Do NOT use raw shell `find` / `grep` as the primary inventory mechanism for scan coverage
+- If a shell command is unavoidable for a niche case, manually exclude ignored paths and
+  record the limitation in `_pipeline.json` or the relevant agent output
+- Tell every spawned scanner that coverage must be deterministic and path-stable on reruns
+
 ### 0c. Detect workspace structure
 
 Before listing directories, check if this is a monorepo/workspace project:
@@ -75,13 +85,11 @@ Store the config values for use in Phase 0d and Phase 1.
 
 If workspaces were detected in 0c, use the workspace package list as the domain list.
 
-Otherwise, discover domains via directory listing:
-```bash
-find . -type d -not -path "*/node_modules/*" -not -path "*/.git/*" \
-       -not -path "*/dist/*" -not -path "*/build/*" \
-       -not -path "*/.cursor/*" -not -path "*/docs/ai/*" \
-       -maxdepth 3
-```
+Otherwise, discover domains via ignore-aware file inventory:
+- Build a stable inventory of source/config files with discovery tools that respect
+  `.cursorignore`
+- Derive domain directories from the inventory rather than from a raw shell directory walk
+- Ignore support/noise paths that contain only generated output or internal framework files
 
 Identify top-level domain directories (typically 4-12). This determines how many
 domain-scanner instances to spawn.
@@ -172,6 +180,8 @@ Spawn these agents simultaneously (all can run in parallel):
 - If this is a workspace project, tell each scanner its workspace package name
 - If domains were grouped in Phase 0d.5, tell the scanner it is scanning a group
   (see domain-scanner's "Grouped scanning" section) and pass the `group_label` + `packages` list
+- Tell each scanner to use ignore-aware, lexicographically stable coverage and to avoid
+  arbitrary sampling caps
 - **Wave execution** (when domain_groups exist and wave_count > 1):
   - Wave 1: all specialist analysts + first batch of domain groups (up to concurrency_limit)
   - Wait for Wave 1 completion via `_status-*.json`

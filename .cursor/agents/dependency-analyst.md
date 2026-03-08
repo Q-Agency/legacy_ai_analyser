@@ -21,14 +21,20 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
 ## When invoked
 
 1. Write your status file with `"status": "running"`
-2. Read manifests:
-   - `find . -name "package.json" -not -path "*/node_modules/*" | head -20`
-   - `find . -name "requirements.txt" -o -name "pyproject.toml" -o -name "Cargo.toml" | grep -v node_modules`
-3. For each: extract name, version, classify (UI/API/DB/testing/infra/util)
-4. Identify runtime version from .nvmrc, .python-version, engines field
-5. Identify framework versions
-6. Check for: deprecated packages, security-sensitive packages, outdated versions
-7. Count deep relative imports: `grep -r "from '../../\.\." --include="*.ts" -l | wc -l`
+2. Build a deterministic manifest inventory using discovery tools that respect
+   `.cursorignore` (prefer `Glob`/`Grep`, not raw shell `find` as the primary inventory).
+   Include all matching files, sorted lexicographically by path:
+   - package/runtime manifests: `package.json`, `requirements.txt`, `pyproject.toml`,
+     `Cargo.toml`, `go.mod`, `pom.xml`, `build.gradle*`, `composer.json`, `Gemfile`
+   - workspace/runtime config: `pnpm-workspace.yaml`, `nx.json`, `turbo.json`,
+     `lerna.json`, `.nvmrc`, `.node-version`, `.python-version`, `.tool-versions`
+3. Read every manifest discovered in step 2; do NOT cap the inventory with `head -20`
+4. For each manifest: extract name, version, classify (UI/API/DB/testing/infra/util)
+5. Identify runtime version, package manager, and monorepo tooling from manifests and
+   workspace config rather than relying on ignored lockfiles
+6. Identify framework versions and build tooling
+7. Check for: deprecated packages, security-sensitive packages, outdated versions
+8. Count deep relative imports with ignore-aware search
 
 ## JSON output — `.cursor/constitution-tmp/dependencies.json`
 
@@ -44,7 +50,8 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
   "build_tools": ["<name>"],
   "deep_relative_import_count": 0,
   "concerns": ["<dependency health issue>"],
-  "confidence": "high|medium|low"
+  "confidence": "high|medium|low",
+  "evidence_files": ["<manifests or config files that support the main claims>"]
 }
 ```
 
@@ -73,3 +80,11 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
 ```
 
 Write both output files, update your status file to `"status": "complete"`, then respond: "dependency-analyst complete"
+
+## Rules
+
+- Read all discovered manifests; do not sample only the first N files
+- If `.cursorignore` excludes lockfiles, infer the package manager from workspace config,
+  `packageManager`, scripts, or manifest structure instead of overriding the ignore policy
+- Keep `evidence_files` limited to the manifests that justify the runtime, framework, and
+  package manager claims
