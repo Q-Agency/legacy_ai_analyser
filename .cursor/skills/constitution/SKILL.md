@@ -50,6 +50,27 @@ Before listing directories, check if this is a monorepo/workspace project:
 
 **If no workspace configuration is found:** proceed with standard directory discovery.
 
+### 0c.5. Read optional configuration
+
+Check if `.cursor/constitution.config.json` exists. If it does, read it:
+
+```json
+{
+  "concurrency_limit": 10,
+  "max_files_per_scanner": 500,
+  "grouping_strategy": "auto|scope|directory|size|none",
+  "custom_groups": { "<label>": ["<glob patterns>"] }
+}
+```
+
+All fields are optional. Defaults:
+- `concurrency_limit`: 10
+- `max_files_per_scanner`: 500
+- `grouping_strategy`: "auto"
+- `custom_groups`: {} (none)
+
+Store the config values for use in Phase 0d and Phase 1.
+
 ### 0d. Inventory the codebase
 
 If workspaces were detected in 0c, use the workspace package list as the domain list.
@@ -65,6 +86,46 @@ find . -type d -not -path "*/node_modules/*" -not -path "*/.git/*" \
 Identify top-level domain directories (typically 4-12). This determines how many
 domain-scanner instances to spawn.
 
+### 0d.5. Domain grouping (monorepo scaling)
+
+Count the number of domain packages (N) and calculate available domain slots:
+
+```
+specialist_count = 7  (6 specialists + auditor reserved)
+slots_per_wave = concurrency_limit - specialist_count
+```
+
+**If N <= slots_per_wave:** single wave, no grouping needed. Each domain gets its own scanner.
+
+**If N > slots_per_wave:** group domains to fit within concurrency limits.
+
+Grouping priority order (use `grouping_strategy` from config, or "auto" which tries in order):
+
+1. **Custom groups** — if `custom_groups` is configured, apply those first
+2. **Scope grouping** — packages sharing an npm scope (`@scope/ui-*` → one scanner)
+3. **Directory proximity** — packages in the same parent directory
+4. **Size-based** — group smallest packages together until reaching ~`max_files_per_scanner` files
+5. **Single packages** >500 files (or `max_files_per_scanner`) get their own dedicated slot
+
+Record grouping in `_pipeline.json`:
+
+```json
+{
+  "domain_groups": [
+    {
+      "group_label": "<label>",
+      "packages": ["<package1>", "<package2>"],
+      "total_files": 0,
+      "wave": 1
+    }
+  ],
+  "wave_count": 1,
+  "concurrency_limit": 10
+}
+```
+
+If no grouping is needed (N <= slots_per_wave), set `domain_groups` to null.
+
 ### 0e. Initialise pipeline status
 
 Write `.cursor/constitution-tmp/_pipeline.json` to track the overall pipeline:
@@ -74,6 +135,7 @@ Write `.cursor/constitution-tmp/_pipeline.json` to track the overall pipeline:
   "started_at": "<ISO timestamp>",
   "phase": "scan",
   "mode": "parallel|sequential",
+  "scan_type": "full",
   "workspace": null,
   "expected_agents": [
     "domain-scanner:<label1>",
@@ -82,7 +144,8 @@ Write `.cursor/constitution-tmp/_pipeline.json` to track the overall pipeline:
     "data-model-analyst",
     "dependency-analyst",
     "pattern-analyst",
-    "runtime-flow-analyst"
+    "runtime-flow-analyst",
+    "infra-analyst"
   ]
 }
 ```
@@ -104,18 +167,25 @@ If it fails, fall back to sequential mode. Record the mode in `_pipeline.json`.
 
 Spawn these agents simultaneously (all can run in parallel):
 
-**Domain scanners** — one instance per top-level domain directory:
+**Domain scanners** — one instance per domain directory (or group):
 - Tell each: "Scan the directory `<path>` as domain `<label>`"
 - If this is a workspace project, tell each scanner its workspace package name
-- Maximum 8 domain scanners in parallel
-- If >8 domains: group smaller dirs, or run in two batches
+- If domains were grouped in Phase 0d.5, tell the scanner it is scanning a group
+  (see domain-scanner's "Grouped scanning" section) and pass the `group_label` + `packages` list
+- **Wave execution** (when domain_groups exist and wave_count > 1):
+  - Wave 1: all specialist analysts + first batch of domain groups (up to concurrency_limit)
+  - Wait for Wave 1 completion via `_status-*.json`
+  - Wave 2+: remaining domain groups (up to concurrency_limit per wave)
+  - Report between waves: "Wave N/M complete: scanned [group labels]"
+- **Single wave** (when all domains fit): spawn all domain scanners alongside specialists
 
-**Specialist analysts** — spawn all five simultaneously:
+**Specialist analysts** — spawn all six simultaneously:
 - `api-contract-analyst` — full codebase scope
 - `data-model-analyst` — full codebase scope
 - `dependency-analyst` — full codebase scope
 - `pattern-analyst` — full codebase scope
 - `runtime-flow-analyst` — full codebase scope
+- `infra-analyst` — full codebase scope
 
 **Checking completion:** Read all `_status-*.json` files in `.cursor/constitution-tmp/`.
 Each agent writes its own status file on completion. Verify every agent listed in
@@ -136,6 +206,7 @@ context. Execute in this order (dependencies inform later agents):
 4. `data-model-analyst` — schemas and entities
 5. `api-contract-analyst` — API surfaces
 6. `runtime-flow-analyst` — actual call chains and middleware
+7. `infra-analyst` — infrastructure and deployment config
 
 For each: read the agent definition from `.cursor/agents/<name>.md`, follow its
 instructions exactly, write the same output files. Update the agent's status file
@@ -174,8 +245,16 @@ Update `_pipeline.json` → `"phase": "complete"`.
 4. Report section count and word estimate for constitution and cheat sheet
 5. Report: "Viewer available at docs/ai/constitution-viewer.html — open in browser"
 6. Ask: "Would you like to expand any section or re-run specific analysts?"
-7. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
-   (keep `docs/ai/constitution-fragments/` — these are useful for re-runs)
+7. Preserve `_corrections.json`: if `.cursor/constitution-tmp/_corrections.json` exists,
+   ensure `docs/ai/constitution-corrections.json` is up to date before any cleanup
+8. Report correction count: if corrections exist, report how many were applied during this run
+9. Write `_scan-metadata.json`: record `last_scan_commit` (current HEAD SHA),
+   `last_scan_timestamp`, `scan_type: "full"`, `agents_run` (all agents), and
+   `agent_file_coverage` (mapping each agent to the files it read, from `files_read_list`
+   in each agent's status/output). This enables future incremental updates.
+10. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
+    (keep `docs/ai/constitution-fragments/`, `docs/ai/constitution-corrections.json`,
+    and `.cursor/constitution-tmp/_scan-metadata.json` — these are useful for re-runs)
 
 ## Error handling
 

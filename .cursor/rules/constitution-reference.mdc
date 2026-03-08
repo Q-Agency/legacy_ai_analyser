@@ -14,7 +14,8 @@ Before generating or modifying code in this project:
    - Section 4 (Data Model) when creating or modifying types/entities
    - Section 5 (API Contract) when adding API calls
    - Section 6 (Runtime Behaviour) when adding new flows or middleware
-   - Section 10 (Technical Debt) when working in a domain with known debt
+   - Section 7 (Infrastructure) when working with build/deploy/CI config files
+   - Section 11 (Technical Debt) when working in a domain with known debt
 3. If working in a Sensitive Zone listed in the cheat sheet: flag for human review
 4. If your generated code introduces a pattern NOT covered by the constitution:
    note it at the end of your response as "New pattern introduced: <description>"

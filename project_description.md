@@ -55,12 +55,13 @@ ORCHESTRATOR (main Cursor agent)
 ├─── SCAN PHASE (parallel, up to 10 concurrent) ──────────────────────────────┐
 │    Each subagent: own context window, writes JSON + MD fragment to tmp/      │
 │                                                                              │
-│  ┌─ domain-scanner        ─── one instance per top-level directory          │
+│  ┌─ domain-scanner        ─── one instance per directory (grouped for monorepos) │
 │  ├─ api-contract-analyst  ─── all API surfaces, auth, versioning            │
 │  ├─ data-model-analyst    ─── schemas, entities, DTOs, data flow            │
 │  ├─ dependency-analyst    ─── tech stack, package health, constraints       │
 │  ├─ pattern-analyst       ─── architecture patterns, conventions, debt      │
-│  └─ runtime-flow-analyst  ─── actual call chains, middleware, side effects  │
+│  ├─ runtime-flow-analyst  ─── actual call chains, middleware, side effects  │
+│  └─ infra-analyst         ─── Dockerfiles, CI/CD, IaC, deployment topology  │
 │                                                                              │
 │    Each writes to: .cursor/constitution-tmp/<name>.json                     │
 │                    .cursor/constitution-tmp/<name>.md   (human-readable)    │
@@ -77,6 +78,14 @@ ORCHESTRATOR (main Cursor agent)
 ├─── CURATE PHASE
 │    .cursor/skills/constitution-curator/SKILL.md
 │    Produces final docs/ai/constitution.md
+│
+├─── CORRECTION LOOP (on-demand)
+│    .cursor/skills/constitution-patch/SKILL.md
+│    Manual corrections with logging and re-run persistence
+│
+├─── INCREMENTAL UPDATE (on-demand)
+│    .cursor/skills/constitution-incremental/SKILL.md
+│    Re-runs only agents affected by recent code changes
 │
 └─── DRIFT DETECTION (ongoing, via Hooks)
      .cursor/hooks/constitution-drift.json
@@ -97,20 +106,26 @@ your-project/
 │   │   ├── data-model-analyst.md
 │   │   ├── dependency-analyst.md
 │   │   ├── pattern-analyst.md
-│   │   ├── runtime-flow-analyst.md      ← NEW: traces actual call chains
-│   │   └── constitution-auditor.md      ← NEW: cross-validates agent claims
+│   │   ├── runtime-flow-analyst.md      ← traces actual call chains
+│   │   ├── infra-analyst.md            ← infrastructure, CI/CD, deployment
+│   │   └── constitution-auditor.md      ← cross-validates agent claims
 │   ├── skills/
 │   │   ├── constitution/
 │   │   │   └── SKILL.md                 ← master orchestration skill
 │   │   ├── constitution-aggregator/
 │   │   │   └── SKILL.md                 ← merge verified reports
-│   │   └── constitution-curator/
-│   │       └── SKILL.md                 ← produce final constitution.md
+│   │   ├── constitution-curator/
+│   │   │   └── SKILL.md                 ← produce final constitution.md
+│   │   ├── constitution-patch/
+│   │   │   └── SKILL.md                 ← manual correction with logging
+│   │   └── constitution-incremental/
+│   │       └── SKILL.md                 ← incremental update via git diff
 │   ├── rules/
 │   │   ├── constitution-mode.mdc        ← orchestration discipline
 │   │   └── constitution-reference.mdc   ← auto-inject constitution on code files
 │   └── hooks/
-│       └── constitution-drift.json      ← NEW: detect drift on key file changes
+│       ├── constitution-drift.json      ← detect drift on key file changes
+│       └── constitution-drift-check.sh  ← drift detection script
 ├── docs/
 │   └── ai/
 │       ├── constitution.md              ← FINAL OUTPUT (moved from project root)

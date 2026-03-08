@@ -18,11 +18,14 @@ constitution-kit/
     │   ├── dependency-analyst.md           ← Tech stack and package health
     │   ├── pattern-analyst.md              ← Architecture and coding patterns
     │   ├── runtime-flow-analyst.md         ← Actual request/event call chains
+    │   ├── infra-analyst.md               ← Infrastructure, CI/CD, deployment
     │   └── constitution-auditor.md         ← Cross-validates all other agents
     ├── skills/
     │   ├── constitution/SKILL.md           ← Master orchestrator
     │   ├── constitution-aggregator/SKILL.md ← Merges verified reports
-    │   └── constitution-curator/SKILL.md   ← Writes final constitution.md
+    │   ├── constitution-curator/SKILL.md   ← Writes final constitution.md
+    │   ├── constitution-patch/SKILL.md     ← Manual corrections with logging
+    │   └── constitution-incremental/SKILL.md ← Incremental updates via git diff
     ├── rules/
     │   ├── constitution-mode.mdc           ← Pipeline discipline rules
     │   └── constitution-reference.mdc      ← Auto-checks constitution on code edits
@@ -55,14 +58,18 @@ Generate a constitution for this codebase
 
 ## What it produces
 
-- `docs/ai/constitution.md` — full 12-section AI generation contract
+- `docs/ai/constitution.md` — full 13-section AI generation contract
 - `docs/ai/constitution-cheatsheet.md` — condensed ~500-800 word version for agent context injection
 - `docs/ai/constitution-viewer.html` — self-contained interactive browser UI. Just open the file
 - `docs/ai/constitution-changelog.md` — section-by-section diff when re-running (created on second run and onwards)
 
 ## Pipeline
 
-Pre-flight → Parallel Scan (up to 13 agents) → Audit → Aggregate → Curate
+Pre-flight → Parallel Scan (up to 14 agents) → Audit → Aggregate → Curate
+
+Incremental mode available: re-runs only agents affected by recent changes.
+Manual corrections via `/constitution-patch` persist across re-runs.
+Monorepo scaling with wave execution for large workspaces.
 
 Sequential fallback available for older Cursor versions.
 

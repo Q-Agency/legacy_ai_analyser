@@ -22,13 +22,23 @@ writes into `docs/ai/constitution.md`.
 2. Read the audit report FIRST: `.cursor/constitution-tmp/audit-report.json`
    This tells you which claims to accept, flag, or exclude.
 
+2.5. Read `_corrections.json` if it exists (check both `.cursor/constitution-tmp/_corrections.json`
+   and `docs/ai/constitution-corrections.json` as fallback). For each correction:
+   - Find the matching claim in the agent reports by section and original_claim text
+   - Override that claim with the corrected_claim value
+   - If original_claim no longer matches any agent report content, flag it as a stale
+     correction in the merged output under `"stale_corrections": [...]`
+   - Report stale correction count to the user so they can review
+
 3. Read all other JSON report files in this order:
    - dependencies.json (tech stack — sets the frame)
    - patterns.json (architecture — shapes everything else)
    - data-model.json
    - api-contracts.json
    - runtime-flow.json
-   - domain-*.json (all domain scanner outputs)
+   - infra.json (infrastructure and deployment — if present)
+   - domain-*.json (all domain scanner outputs — if a domain report has a `packages`
+     array, unpack each package as a separate domain entry in the merged structure)
 
 4. Build merged structure covering:
    - System identity (name, type, language, runtime, framework)
@@ -37,6 +47,7 @@ writes into `docs/ai/constitution.md`.
    - Data model (from data-model + cross-checked against domains)
    - API surface (from api-contracts + cross-checked against runtime-flow)
    - Runtime behaviour (from runtime-flow — this is the unique section static tools miss)
+   - Infrastructure & Deployment (from infra — deployment targets, CI/CD, containerisation, env vars, topology)
    - Cross-domain concerns (auth, error handling, logging, events)
    - AI generation rules (derived from patterns — DO and DO NOT lists)
    - Technical debt register (all issues from all reports, deduplicated, sorted by severity)

@@ -21,7 +21,7 @@ On start, write `.cursor/constitution-tmp/_status-domain-scanner-<label>.json`:
 
 On completion (after writing both output files), update it to:
 ```json
-{ "agent": "domain-scanner:<label>", "status": "complete", "completed_at": "<ISO timestamp>", "output_files": ["domain-<label>.json", "domain-<label>.md"] }
+{ "agent": "domain-scanner:<label>", "status": "complete", "completed_at": "<ISO timestamp>", "output_files": ["domain-<label>.json", "domain-<label>.md"], "files_read_list": ["<paths of all files read>"] }
 ```
 
 On fatal error, update it to:
@@ -46,6 +46,21 @@ If the orchestrator tells you this is a workspace package, also capture:
 - Whether it is a "leaf" package or a shared library consumed by others
 - Add the `"workspace_package"` field to your JSON output (see below)
 
+## Grouped scanning (monorepo scaling)
+
+If the orchestrator tells you this is a **grouped scan**, you will receive:
+- A `group_label` (e.g., `ui-components`)
+- A list of `packages` with their paths (e.g., `["packages/ui-button", "packages/ui-modal"]`)
+
+When scanning a group:
+1. Scan each package directory in the group sequentially
+2. Write a single combined JSON output with per-package sub-sections
+3. Write a single combined markdown fragment with sub-headings per package
+4. Use the `group_label` as the `<label>` in output file names
+5. Set confidence based on the lowest confidence of any package in the group
+
+The JSON output for grouped scans uses the `packages` array field (see below).
+
 ## JSON output — `.cursor/constitution-tmp/domain-<label>.json`
 
 ```json
@@ -63,7 +78,35 @@ If the orchestrator tells you this is a workspace package, also capture:
   "confidence": "high|medium|low",
   "files_read": 0,
   "files_skipped": 0,
-  "workspace_package": null
+  "workspace_package": null,
+  "group_label": null,
+  "packages": null
+}
+```
+
+**For grouped scans**, populate the `packages` array instead of using root-level fields:
+
+```json
+{
+  "domain": "<group_label>",
+  "group_label": "<group_label>",
+  "packages": [
+    {
+      "name": "<package name>",
+      "path": "<relative path>",
+      "responsibility": "<1-2 sentences>",
+      "key_modules": [...],
+      "patterns_used": [...],
+      "external_dependencies": [...],
+      "internal_dependencies": [...],
+      "technical_debt": [...],
+      "confidence": "high|medium|low",
+      "files_read": 0,
+      "files_skipped": 0
+    }
+  ],
+  "confidence": "high|medium|low",
+  "files_read_list": ["<all files read across all packages>"]
 }
 ```
 

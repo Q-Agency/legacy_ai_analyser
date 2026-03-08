@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # install.sh — Install the Constitution Generator into your project
 #
 # Usage:
@@ -8,7 +8,7 @@
 # Or copy the constitution-kit folder next to your project and run:
 #   bash ../constitution-kit/install.sh
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -23,6 +23,8 @@ mkdir -p .cursor/agents
 mkdir -p .cursor/skills/constitution
 mkdir -p .cursor/skills/constitution-aggregator
 mkdir -p .cursor/skills/constitution-curator
+mkdir -p .cursor/skills/constitution-patch
+mkdir -p .cursor/skills/constitution-incremental
 mkdir -p .cursor/rules
 mkdir -p .cursor/hooks
 mkdir -p .cursor/constitution-tmp
@@ -40,14 +42,16 @@ fi
 # 3. Copy agents
 echo "[3/6] Installing subagents..."
 cp "$SCRIPT_DIR/.cursor/agents/"*.md .cursor/agents/
-echo "  ✓ 7 agents installed"
+echo "  ✓ 8 agents installed"
 
 # 4. Copy skills
 echo "[4/6] Installing skills..."
 cp "$SCRIPT_DIR/.cursor/skills/constitution/SKILL.md" .cursor/skills/constitution/SKILL.md
 cp "$SCRIPT_DIR/.cursor/skills/constitution-aggregator/SKILL.md" .cursor/skills/constitution-aggregator/SKILL.md
 cp "$SCRIPT_DIR/.cursor/skills/constitution-curator/SKILL.md" .cursor/skills/constitution-curator/SKILL.md
-echo "  ✓ 3 skills installed"
+cp "$SCRIPT_DIR/.cursor/skills/constitution-patch/SKILL.md" .cursor/skills/constitution-patch/SKILL.md
+cp "$SCRIPT_DIR/.cursor/skills/constitution-incremental/SKILL.md" .cursor/skills/constitution-incremental/SKILL.md
+echo "  ✓ 5 skills installed"
 
 # 5. Copy rules and hooks
 echo "[5/6] Installing rules and hooks..."
@@ -74,8 +78,8 @@ echo "=== Installation complete ==="
 echo ""
 echo "Files installed:"
 echo "  .cursorignore"
-echo "  .cursor/agents/           (7 subagent definitions)"
-echo "  .cursor/skills/           (3 skill definitions)"
+echo "  .cursor/agents/           (8 subagent definitions)"
+echo "  .cursor/skills/           (5 skill definitions)"
 echo "  .cursor/rules/            (2 rule files)"
 echo "  .cursor/hooks.json        (Cursor hooks config — drift detection)"
 echo "  .cursor/hooks/            (hook scripts)"
@@ -91,3 +95,7 @@ echo ""
 echo "Optional: Install git pre-commit hook for drift detection:"
 echo "  cp $SCRIPT_DIR/pre-commit-hook.sh .git/hooks/pre-commit"
 echo "  chmod +x .git/hooks/pre-commit"
+echo ""
+echo "Optional: For monorepos with >10 packages, create .cursor/constitution.config.json"
+echo "  to configure concurrency limits and domain grouping strategy."
+echo "  See project docs for schema details."

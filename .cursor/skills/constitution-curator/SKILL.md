@@ -20,7 +20,7 @@ This is the document that all future AI generation work will reference.
 2. Also read all `docs/ai/constitution-fragments/*.md` for narrative context
 3. **Compare with existing constitution (if present):**
    - If `docs/ai/constitution.md` already exists, read it
-   - For each of the 12 sections, compare the new data against existing content
+   - For each of the 13 sections, compare the new data against existing content
    - Track: added sections, removed content, modified claims, changed confidence levels, new/resolved debt items
    - Store this diff for step 8
 4. Write `docs/ai/constitution.md` following the template below exactly
@@ -62,7 +62,7 @@ This is the document that all future AI generation work will reference.
 > **Generated:** [date]
 > **Method:** Cursor multi-agent analysis (domain-scanner × N, api-contract-analyst,
 > data-model-analyst, dependency-analyst, pattern-analyst, runtime-flow-analyst,
-> constitution-auditor)
+> infra-analyst, constitution-auditor)
 > **Overall confidence:** [from audit report]
 
 ---
@@ -195,7 +195,47 @@ and the return path. Be specific about where validation happens, where transacti
 
 ---
 
-## 7. Coding Conventions
+## 7. Infrastructure & Deployment
+
+> This section captures how the system is built, tested, containerised, and deployed.
+> AI generation must respect these operational constraints.
+
+**Deployment targets:**
+| Target | Platform | Strategy | Config |
+|--------|----------|----------|--------|
+[from infra-analyst — one row per deployment target]
+
+**CI/CD pipelines:**
+| Pipeline | Platform | Triggers | Stages |
+|----------|----------|----------|--------|
+[from infra-analyst — one row per pipeline]
+
+**Containerisation:**
+- Dockerfiles: [list]
+- Base images: [list]
+- Multi-stage builds: [yes/no]
+- Compose files: [list or "none"]
+
+**Build pipeline:**
+[Describe the build → test → deploy flow from CI/CD config]
+
+**Deployment topology:**
+[Describe how components connect in production — single container, multi-service, serverless, etc.]
+
+### Environment variables
+| Variable | Source | Required | Purpose |
+|----------|--------|----------|---------|
+[from infra-analyst — names only, never values]
+
+### Infrastructure as Code
+[Describe IaC setup: terraform, helm, k8s manifests, CDK, or note its absence]
+
+### Infrastructure concerns
+[List from infra-analyst: missing health checks, no caching, secrets in env, etc.]
+
+---
+
+## 8. Coding Conventions
 
 > These are observed conventions from the actual codebase. AI must follow them
 > when generating new code, even if they differ from framework defaults.
@@ -225,7 +265,7 @@ Result type? Where are errors caught, where are they thrown?]
 
 ---
 
-## 8. Test Strategy
+## 9. Test Strategy
 
 **Framework:** [Jest/Vitest/pytest/JUnit]
 **Location:** [co-located __tests__ / separate test/ dir]
@@ -241,7 +281,7 @@ Result type? Where are errors caught, where are they thrown?]
 
 ---
 
-## 9. AI Generation Rules
+## 10. AI Generation Rules
 
 > These rules are derived from actual codebase analysis. They are not aspirational —
 > they reflect what the codebase actually does. Follow them for consistent output.
@@ -265,7 +305,7 @@ Examples format:
 
 ---
 
-## 10. Technical Debt Register
+## 11. Technical Debt Register
 
 > Review this before starting AI-assisted work in affected areas. AI generation
 > will propagate and compound existing debt unless explicitly countered.
@@ -281,7 +321,7 @@ Examples format:
 
 ---
 
-## 11. Sensitive Zones
+## 12. Sensitive Zones
 
 > AI generation requires explicit human review before merging changes in these areas.
 
@@ -292,11 +332,11 @@ For each zone: path + reason + what to watch for
 
 ---
 
-## 12. Analysis Metadata
+## 13. Analysis Metadata
 
 **Scan date:** [date]
 **Cursor version:** [version]
-**Agents run:** domain-scanner ×[N], + 6 specialist agents
+**Agents run:** domain-scanner ×[N], + 7 specialist agents
 **Files sampled:** ~[count]
 **Domains covered:** [count]
 
@@ -353,6 +393,12 @@ The cheat sheet MUST include these sections and nothing else:
 ## File structure for new features
 
 [The file template from section 7, condensed to the essential tree]
+
+## Infrastructure
+
+[One-line: deployment platform and strategy]
+[One-line: CI/CD platform and key stages]
+[One-line: containerisation summary — Docker, base image, compose]
 
 ## Naming
 
@@ -469,6 +515,7 @@ Use these exact IDs and icons for consistency:
 | datamodel | Data Model | ◈ |
 | api | API Contract | ↔ |
 | runtime | Runtime Behaviour | ⟳ |
+| infra | Infrastructure & Deployment | ⛭ |
 | conventions | Coding Conventions | § |
 | testing | Test Strategy | ✓ |
 | rules | AI Generation Rules | ⚡ |

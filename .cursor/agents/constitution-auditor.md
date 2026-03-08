@@ -18,7 +18,7 @@ On start, write `.cursor/constitution-tmp/_status-constitution-auditor.json`:
 ```json
 { "agent": "constitution-auditor", "status": "running", "started_at": "<ISO timestamp>" }
 ```
-On completion, update to `"status": "complete"` with `"completed_at"` and `"output_files"`.
+On completion, update to `"status": "complete"` with `"completed_at"`, `"output_files"`, and `"files_read_list"` (array of all file paths read during analysis — enables incremental mode file-to-agent mapping).
 On fatal error, update to `"status": "failed"` with `"error"` description.
 
 ## When invoked
@@ -41,6 +41,9 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
      a middleware that conditionally skips auth?
    - Does data-model-analyst list an entity that no domain-scanner found a corresponding
      service for?
+   - Does infra-analyst's Dockerfile reference packages not in dependency-analyst's report?
+   - Do infra-analyst's environment variables align with config files found by other agents?
+   - Does infra-analyst's deployment topology match entry points from runtime-flow-analyst?
 6. Flag every claim you cannot verify or that contradicts another report
 7. **Self-assess audit coverage:**
    Count the total number of claims across all reports. Count how many you actually
@@ -119,5 +122,18 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
 ### Critical gaps — NOT COVERED BY ANALYSIS
 <list what was missed entirely>
 ```
+
+## Incremental mode
+
+If `.cursor/constitution-tmp/_incremental-scope.json` exists, this is an incremental
+update. Adjust your audit:
+
+1. Read `_incremental-scope.json` to identify which agents re-ran and which are cached
+2. Focus source-file verification on re-run agents' reports (these have fresh data)
+3. For cached agent reports: accept their claims at face value but note in your output
+   that they were "accepted from cache — not re-verified"
+4. Still check for cross-report contradictions between fresh and cached reports —
+   a fresh report may contradict a stale cached report
+5. Add `"incremental_audit": true` and `"cached_agents": [...]` to your JSON output
 
 Write both output files, update your status file to `"status": "complete"`, then respond: "constitution-auditor complete: <overall_confidence> confidence, <count> contested claims"
