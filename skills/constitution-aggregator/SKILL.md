@@ -30,6 +30,13 @@ uses to produce `docs/ai/full-analysis-YYYY-MM-DD.md` and `docs/ai/CONSTITUTION.
      correction in the merged output under `"stale_corrections": [...]`
    - Report stale correction count to the user so they can review
 
+2.7. Read `_human-answers.json` if it exists. For each answer:
+   - Find the matching section in the agent reports
+   - Override or supplement the automated claim with the human-provided answer
+   - Mark the answer source as `"human"` so the curator can attribute it
+   - For skipped questions: note the gap as `[UNRESOLVED]` in the merged structure
+     (distinct from `[NEEDS REVIEW]` — the human was asked and chose not to answer)
+
 3. Read all other JSON report files in this order:
    - dependencies.json (tech stack — sets the frame)
    - patterns.json (architecture — shapes everything else)

@@ -90,19 +90,7 @@ survive `.cursor/constitution-tmp/` cleanup. This is the durable copy.
 If `docs/ai/constitution-corrections.json` already exists, merge — don't overwrite.
 The `_corrections.json` in tmp is always the primary; the backup is a safety copy.
 
-### 8. Update changelog
-
-Read `docs/ai/constitution-changelog.md` (create if it doesn't exist).
-
-If the latest entry already has a `### Manual corrections` subsection, append to it.
-Otherwise, add a new subsection:
-
-```markdown
-### Manual corrections
-- [corr-<NNN>] <section>: <brief description of correction>
-```
-
-### 9. Report
+### 8. Report
 
 Tell the user:
 - What was corrected and where

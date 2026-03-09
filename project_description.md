@@ -1,14 +1,13 @@
 # Cursor Codebase Constitution Generator
 ## Architecture Guide: Multi-Subagent Brownfield Intelligence Layer
 
-> **Goal:** Analyse a large brownfield codebase inside Cursor IDE and produce a
-> `docs/ai/constitution.md` — a persistent AI-generation contract and current-system
-> truth layer for downstream AI workflows — using only Cursor-native primitives:
-> Skills, Subagents, Rules, and Hooks.
+> **Goal:** Analyse a large brownfield codebase inside Cursor IDE and produce
+> `docs/ai/CONSTITUTION.md` — a compact cornerstone for downstream AI workflows —
+> and `docs/ai/full-analysis-YYYY-MM-DD.md` — a detailed 13-section reference —
+> using only Cursor-native primitives: Skills, Subagents, and Rules.
 >
-> This is not a one-time summary tool. It is a **living intelligence layer** that
-> stays accurate as the codebase evolves and gives downstream spec, design, task,
-> development, and QA steps a shared brownfield baseline.
+> The constitution is a one-time analysis artifact that gives downstream spec,
+> design, task, development, and QA steps a shared brownfield baseline.
 
 ---
 
@@ -37,10 +36,9 @@ roadmap or product brief; it is the evidence-backed baseline downstream agents u
 
 | Primitive | Location | Purpose | Context behaviour |
 |---|---|---|---|
-| **SKILL.md** | `.cursor/skills/<n>/SKILL.md` | Procedural how-to, invoked on demand | Loaded when relevant/invoked |
-| **Subagent** | `.cursor/agents/<n>.md` | Isolated specialist with own context | Separate context window per invocation |
-| **Rule (.mdc)** | `.cursor/rules/<n>.mdc` | Declarative persistent instructions | Injected at start of main context |
-| **Hook** | `.cursor/hooks/<n>.json` | Event-triggered automation | Fires on file save, commit, session start |
+| **SKILL.md** | `skills/<n>/SKILL.md` | Procedural how-to, invoked on demand | Loaded when relevant/invoked |
+| **Subagent** | `agents/<n>.md` | Isolated specialist with own context | Separate context window per invocation |
+| **Rule (.mdc)** | `rules/<n>.mdc` | Declarative persistent instructions | Injected at start of main context |
 | **AGENTS.md** | Project root | Simple always-on instruction layer | Always injected |
 | **.cursorignore** | Project root | Exclude files/dirs from AI context | Applied globally to all agents |
 
@@ -59,8 +57,8 @@ PRE-FLIGHT PHASE
 │
 ORCHESTRATOR (main Cursor agent)
 │
-│  reads: .cursor/rules/constitution-mode.mdc      (orchestration discipline)
-│  uses:  .cursor/skills/constitution/SKILL.md     (procedural workflow)
+│  reads: rules/constitution-mode.mdc         (orchestration discipline)
+│  uses:  skills/constitution/SKILL.md        (procedural workflow)
 │
 ├─── SCAN PHASE (parallel, up to 10 concurrent) ──────────────────────────────┐
 │    Each subagent: own context window, writes JSON + MD fragment to tmp/      │
@@ -81,25 +79,25 @@ ORCHESTRATOR (main Cursor agent)
 │    constitution-auditor subagent
 │    Cross-checks claims across all reports before anything is written
 │
+├─── HUMAN Q&A PHASE (skippable)
+│    Targeted questions from audit gaps, low-confidence sections, and
+│    missing business context the code alone can't reveal
+│    Answers recorded in .cursor/constitution-tmp/_human-answers.json
+│
 ├─── AGGREGATE PHASE
-│    .cursor/skills/constitution-aggregator/SKILL.md
+│    skills/constitution-aggregator/SKILL.md
 │    Merges verified reports, resolves conflicts, deduplicates
 │
 ├─── CURATE PHASE
-│    .cursor/skills/constitution-curator/SKILL.md
-│    Produces final docs/ai/constitution.md
+│    skills/constitution-curator/SKILL.md
+│    Produces:
+│      docs/ai/CONSTITUTION.md          (compact cornerstone)
+│      docs/ai/full-analysis-YYYY-MM-DD.md  (detailed reference)
+│      docs/ai/constitution-viewer.html (interactive browser UI)
 │
-├─── CORRECTION LOOP (on-demand)
-│    .cursor/skills/constitution-patch/SKILL.md
-│    Manual corrections with logging and re-run persistence
-│
-├─── INCREMENTAL UPDATE (on-demand)
-│    .cursor/skills/constitution-incremental/SKILL.md
-│    Re-runs only agents affected by recent code changes
-│
-└─── DRIFT DETECTION (ongoing, via Hooks)
-     .cursor/hooks/constitution-drift.json
-     Fires on key file changes to flag when constitution needs updating
+└─── CORRECTION LOOP (on-demand)
+     skills/constitution-patch/SKILL.md
+     Manual corrections with logging and re-run persistence
 ```
 
 ---
@@ -110,41 +108,42 @@ ORCHESTRATOR (main Cursor agent)
 your-project/
 ├── .cursorignore                        ← FIRST artifact generated, gates all analysis
 ├── .cursor/
-│   ├── agents/
-│   │   ├── domain-scanner.md
-│   │   ├── api-contract-analyst.md
-│   │   ├── data-model-analyst.md
-│   │   ├── dependency-analyst.md
-│   │   ├── pattern-analyst.md
-│   │   ├── runtime-flow-analyst.md      ← traces actual call chains
-│   │   ├── infra-analyst.md            ← infrastructure, CI/CD, deployment
-│   │   └── constitution-auditor.md      ← cross-validates agent claims
-│   ├── skills/
-│   │   ├── constitution/
-│   │   │   └── SKILL.md                 ← master orchestration skill
-│   │   ├── constitution-aggregator/
-│   │   │   └── SKILL.md                 ← merge verified reports
-│   │   ├── constitution-curator/
-│   │   │   └── SKILL.md                 ← produce final constitution.md
-│   │   ├── constitution-patch/
-│   │   │   └── SKILL.md                 ← manual correction with logging
-│   │   └── constitution-incremental/
-│   │       └── SKILL.md                 ← incremental update via git diff
-│   ├── rules/
-│   │   ├── constitution-mode.mdc        ← orchestration discipline
-│   │   └── constitution-reference.mdc   ← auto-inject constitution on code files
-│   └── hooks/
-│       ├── constitution-drift.json      ← detect drift on key file changes
-│       └── constitution-drift-check.sh  ← drift detection script
+│   └── constitution-tmp/                ← scratch JSON (gitignored)
+│       └── .gitignore
 ├── docs/
 │   └── ai/
-│       ├── constitution.md              ← FINAL OUTPUT (moved from project root)
+│       ├── CONSTITUTION.md              ← COMPACT CORNERSTONE (primary output)
+│       ├── full-analysis-YYYY-MM-DD.md  ← DETAILED 13-SECTION REFERENCE
+│       ├── constitution-viewer.html     ← INTERACTIVE BROWSER UI
 │       └── constitution-fragments/      ← intermediate MD fragments (inspectable)
 │           ├── domain-auth.md
 │           ├── api-contracts.md
 │           └── ...
-└── .cursor/constitution-tmp/            ← scratch JSON (gitignored)
-    └── .gitignore
+```
+
+Plugin structure (this repo):
+
+```
+constitution-generator/
+├── .cursor-plugin/
+│   └── plugin.json                      ← Plugin manifest
+├── agents/
+│   ├── domain-scanner.md
+│   ├── api-contract-analyst.md
+│   ├── data-model-analyst.md
+│   ├── dependency-analyst.md
+│   ├── pattern-analyst.md
+│   ├── runtime-flow-analyst.md
+│   ├── infra-analyst.md
+│   └── constitution-auditor.md
+├── skills/
+│   ├── constitution/SKILL.md            ← Master orchestrator
+│   ├── constitution-aggregator/SKILL.md ← Merge verified reports
+│   ├── constitution-curator/SKILL.md    ← Produce final outputs
+│   └── constitution-patch/SKILL.md      ← Manual corrections
+├── rules/
+│   └── constitution-mode.mdc            ← Orchestration discipline
+└── .cursorignore                        ← Baseline exclusions template
 ```
 
 ---
@@ -248,7 +247,7 @@ label. Produce a structured report about that subtree only.
 
 ## When invoked
 
-1. List files: `find <dir> -type f -not -path "*/node_modules/*" | head -200`
+1. Use ignore-aware file inventory (Glob/Grep) to list files in <dir>
 2. For each major file: read it, identify purpose, exports, dependencies, patterns
 3. Identify the primary responsibility of this domain
 4. Note coupling, violations, technical debt, and unusual patterns
@@ -269,6 +268,8 @@ label. Produce a structured report about that subtree only.
   "internal_dependencies": ["<other domain paths>"],
   "technical_debt": ["<description>"],
   "confidence": "high|medium|low",
+  "coverage_notes": "<what was and wasn't covered>",
+  "evidence_files": ["<key files read>"],
   "files_read": 0,
   "files_skipped": 0
 }
@@ -322,14 +323,12 @@ You are an API contract specialist. You map every API boundary in the codebase.
 
 ## When invoked
 
-1. Find route definitions:
-   `grep -r "router\.\|app\.get\|app\.post\|@Get\|@Post\|@Route\|path(" --include="*.ts" --include="*.js" --include="*.py" -l`
-2. Find GraphQL: `find . -name "*.graphql" -o -name "schema.ts" | grep -v node_modules`
-3. Find OpenAPI/Swagger: `find . -name "openapi.yaml" -o -name "swagger.json" | grep -v node_modules`
-4. Find events/messages: look for kafka, rabbitmq, eventbus, pubsub patterns
-5. For each surface: read and extract endpoint signatures
-6. Identify auth patterns per endpoint group
-7. Identify versioning strategy
+1. Find route definitions using ignore-aware search (Glob/Grep)
+2. Find GraphQL schemas, OpenAPI/Swagger specs
+3. Find events/messages: look for kafka, rabbitmq, eventbus, pubsub patterns
+4. For each surface: read and extract endpoint signatures
+5. Identify auth patterns per endpoint group
+6. Identify versioning strategy
 
 ## JSON output — `.cursor/constitution-tmp/api-contracts.json`
 
@@ -392,12 +391,10 @@ You are a data architecture specialist.
 
 ## When invoked
 
-1. Find schema definitions:
-   - SQL: `find . -path "*/migrations/*.sql" | grep -v node_modules`
-   - ORM: `grep -r "@Entity\|@Table\|Model.define\|class.*extends Model" --include="*.ts" --include="*.py" -l`
-   - Prisma/Drizzle: `find . -name "schema.prisma" -o -name "schema.ts" | grep -v node_modules`
+1. Find schema definitions using ignore-aware search:
+   - SQL migrations, ORM entities, Prisma/Drizzle schemas
 2. For each model/entity: extract fields, relations, indexes
-3. Find DTOs: `grep -r "interface.*DTO\|type.*DTO\|class.*DTO" --include="*.ts" -l`
+3. Find DTOs and value objects
 4. Trace data flow: DB → repository → service → controller → client
 5. Identify: normalization issues, missing indexes, N+1 risks, naming inconsistencies
 
@@ -467,14 +464,11 @@ You are a tech stack and dependency specialist.
 
 ## When invoked
 
-1. Read manifests:
-   - `find . -name "package.json" -not -path "*/node_modules/*" | head -20`
-   - `find . -name "requirements.txt" -o -name "pyproject.toml" -o -name "Cargo.toml" | grep -v node_modules`
+1. Use deterministic manifest inventory (Glob) to find all package manifests
 2. For each: extract name, version, classify (UI/API/DB/testing/infra/util)
 3. Identify runtime version from .nvmrc, .python-version, engines field
 4. Identify framework versions
 5. Check for: deprecated packages, security-sensitive packages, outdated versions
-6. Count deep relative imports: `grep -r "from '../../\.\." --include="*.ts" -l | wc -l`
 
 ## JSON output — `.cursor/constitution-tmp/dependencies.json`
 
@@ -488,8 +482,8 @@ You are a tech stack and dependency specialist.
   "package_manager": "npm|yarn|pnpm|pip|...",
   "monorepo_tool": "nx|turborepo|lerna|none",
   "build_tools": ["<name>"],
-  "deep_relative_import_count": 0,
   "concerns": ["<dependency health issue>"],
+  "evidence_files": ["<manifest files read>"],
   "confidence": "high|medium|low"
 }
 ```
@@ -512,7 +506,6 @@ You are a tech stack and dependency specialist.
 ### Constraints
 - Node/Python/Java version: <exact version — enforce via .nvmrc or similar>
 - Import style: <ESM|CommonJS|mixed>
-- Deep relative imports detected: <count> — <high = architecture smell>
 
 ### Concerns
 <list health issues with recommended actions>
@@ -606,7 +599,7 @@ Write both files, then respond: "pattern-analyst complete"
 
 ---
 
-### 6.6 `runtime-flow-analyst.md` ← NEW
+### 6.6 `runtime-flow-analyst.md`
 
 ```markdown
 ---
@@ -626,11 +619,7 @@ when a request or event arrives.
 
 ## When invoked
 
-1. Find entry points:
-   - HTTP: `grep -r "app.listen\|server.listen\|bootstrap\|createServer" --include="*.ts" --include="*.js" -l`
-   - CLI: `find . -name "cli.ts" -o -name "cli.js" -o -name "cmd/" | grep -v node_modules`
-   - Background jobs: `grep -r "cron\|schedule\|queue\|worker" --include="*.ts" -l`
-   - Event consumers: `grep -r "subscribe\|consume\|on(" --include="*.ts" -l | head -20`
+1. Find entry points using deterministic, ignore-aware inventory (Glob/Grep)
 
 2. Trace 2-3 representative request flows end-to-end:
    - Pick one simple CRUD endpoint
@@ -638,15 +627,10 @@ when a request or event arrives.
    - Pick one event/background job if present
    For each: read the entry file, follow imports and calls through the layers
 
-3. Map middleware chain:
-   `grep -r "app.use\|middleware\|guard\|interceptor\|filter" --include="*.ts" -l | head -20`
-   Read each, identify what it does and when it fires
+3. Map middleware chain using ignore-aware search
 
 4. Find side effects per operation type:
-   - DB writes: what tables change on a typical POST/PUT?
-   - Events emitted: what downstream systems are triggered?
-   - External calls: what third-party APIs are called synchronously?
-   - Cache invalidation: what gets cleared?
+   - DB writes, events emitted, external calls, cache invalidation
 
 5. Identify implicit dependencies: things that MUST exist or be in a certain state
    for an operation to succeed that are NOT enforced by the type system
@@ -676,6 +660,8 @@ when a request or event arrives.
     }
   ],
   "global_side_effects": ["<things that always happen regardless of endpoint>"],
+  "coverage_notes": "<what was and wasn't traced>",
+  "evidence_files": ["<key files read>"],
   "confidence": "high|medium|low"
 }
 ```
@@ -717,7 +703,7 @@ Write both files, then respond: "runtime-flow-analyst complete"
 
 ---
 
-### 6.7 `constitution-auditor.md` ← NEW
+### 6.7 `constitution-auditor.md`
 
 ```markdown
 ---
@@ -807,598 +793,72 @@ Write both files, then respond: "constitution-auditor complete: <overall_confide
 
 ## 7. Skill Definitions
 
-### 7.1 Master Orchestration Skill: `.cursor/skills/constitution/SKILL.md`
+### 7.1 Master Orchestration Skill: `skills/constitution/SKILL.md`
 
-```markdown
----
-name: constitution
-description: >
-  Orchestrate full codebase analysis to produce docs/ai/constitution.md.
-  Handles pre-flight setup, parallel scanning, auditing, aggregation, and
-  curation. Invoke with /constitution or "generate constitution" or
-  "analyse codebase for AI constitution".
-version: 2.0.0
----
+See `skills/constitution/SKILL.md` in this repo. Key phases:
 
-# Codebase Constitution Generator
+1. **Pre-flight** — generate `.cursorignore`, detect monorepo, inventory codebase
+2. **Parallel scan** — spawn domain scanners + specialist analysts
+3. **Audit** — cross-validate all claims
+4. **Human Q&A** — targeted questions to fill gaps (skippable)
+5. **Aggregate** — merge verified reports + human answers
+6. **Curate** — produce `CONSTITUTION.md`, `full-analysis-*.md`, and viewer
 
-## Purpose
+### 7.2 Aggregator Skill: `skills/constitution-aggregator/SKILL.md`
 
-Produce `docs/ai/constitution.md` — a durable, audited AI-generation contract
-for a brownfield project — by running a Prepare → Map → Audit → Reduce → Curate
-pipeline using parallel Cursor subagents.
+Merges all scan reports into one verified intermediate structure that the curator
+uses to produce `docs/ai/full-analysis-YYYY-MM-DD.md` and `docs/ai/CONSTITUTION.md`.
 
-## Phase 0: Pre-flight (do this before spawning any subagent)
+### 7.3 Curator Skill: `skills/constitution-curator/SKILL.md`
 
-### 0a. Create directory structure
-```bash
-mkdir -p .cursor/constitution-tmp
-mkdir -p docs/ai/constitution-fragments
-```
+Produces four artifacts from the merged, audited intermediate data:
 
-### 0b. Generate .cursorignore
-If `.cursorignore` does not exist, create it now using the baseline template from
-section 5 of this architecture guide. If it exists, read it and confirm it covers:
-- node_modules/, dist/, build/, coverage/
-- *.lock, *.generated.*, *.min.js
-- .env, *.pem, secrets/
+1. `docs/ai/full-analysis-YYYY-MM-DD.md` — detailed 13-section reference
+2. `docs/ai/CONSTITUTION.md` — compact cornerstone (~600-800 words) with fixed 10-section contract
+3. `docs/ai/constitution.json` — machine-readable constitution for downstream agent lookups
+4. `docs/ai/constitution-viewer.html` — interactive browser UI
 
-If any of those are missing, add them before proceeding.
+### 7.4 Patch Skill: `skills/constitution-patch/SKILL.md`
 
-### 0c. Inventory the codebase
-```bash
-find . -type d -not -path "*/node_modules/*" -not -path "*/.git/*" \
-       -not -path "*/dist/*" -not -path "*/build/*" \
-       -not -path "*/.cursor/*" -not -path "*/docs/ai/*" \
-       -maxdepth 3
-```
-
-Identify top-level domain directories (typically 4-12). This determines how many
-domain-scanner instances to spawn.
-
-## Phase 1: Parallel scan
-
-Spawn these agents simultaneously (all can run in parallel):
-
-**Domain scanners** — one instance per top-level domain directory:
-- Tell each: "Scan the directory `<path>` as domain `<label>`"
-- Maximum 8 domain scanners in parallel
-- If >8 domains: group smaller dirs, or run in two batches
-
-**Specialist analysts** — spawn all four simultaneously:
-- `api-contract-analyst` — full codebase scope
-- `data-model-analyst` — full codebase scope
-- `dependency-analyst` — full codebase scope
-- `pattern-analyst` — full codebase scope
-- `runtime-flow-analyst` — full codebase scope
-
-Wait for ALL phase 1 agents to complete before moving to phase 2.
-Check completion by verifying their output files exist in `.cursor/constitution-tmp/`.
-
-## Phase 2: Audit
-
-Spawn `constitution-auditor`.
-Wait for `audit-report.json` to appear in `.cursor/constitution-tmp/`.
-Report audit results to user: "Audit complete: <confidence>, <count> contested claims."
-If overall_confidence is "low": ask user if they want to re-run specific agents.
-
-## Phase 3: Aggregate
-
-Invoke the `constitution-aggregator` skill.
-
-## Phase 4: Curate
-
-Invoke the `constitution-curator` skill.
-
-## Phase 5: Finalise
-
-1. Verify `docs/ai/constitution.md` exists
-2. Report section count and word estimate
-3. Ask: "Would you like to expand any section or re-run specific analysts?"
-4. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
-   (keep `docs/ai/constitution-fragments/` — these are useful for re-runs)
-
-## Error handling
-
-- Subagent fails to write output: retry once with the same prompt
-- Directory too large (>500 files): split into subdirectories, spawn two scanners
-- Malformed JSON: ask that subagent to re-write its output file
-- Audit finds low confidence: do not hide this — surface it clearly in the constitution
-```
-
----
-
-### 7.2 Aggregator Skill: `.cursor/skills/constitution-aggregator/SKILL.md`
-
-```markdown
----
-name: constitution-aggregator
-description: >
-  Merges all partial JSON and MD reports from .cursor/constitution-tmp/ into a
-  single coherent intermediate representation, applying audit findings to flag
-  uncertain content. Invoke after auditor completes.
-version: 2.0.0
----
-
-# Constitution Aggregator
-
-## Purpose
-
-Merge all scan reports into one verified intermediate structure that the curator
-writes into `docs/ai/constitution.md`.
-
-## Steps
-
-1. List all files: `ls -la .cursor/constitution-tmp/`
-
-2. Read the audit report FIRST: `.cursor/constitution-tmp/audit-report.json`
-   This tells you which claims to accept, flag, or exclude.
-
-3. Read all other JSON files in this order:
-   - dependencies.json (tech stack — sets the frame)
-   - patterns.json (architecture — shapes everything else)
-   - data-model.json
-   - api-contracts.json
-   - runtime-flow.json
-   - domain-*.json (all domain scanner outputs)
-
-4. Build merged structure covering:
-   - System identity (name, type, language, runtime, framework)
-   - Architecture narrative (from patterns + domains)
-   - Tech stack contract (from dependencies)
-   - Data model (from data-model + cross-checked against domains)
-   - API surface (from api-contracts + cross-checked against runtime-flow)
-   - Runtime behaviour (from runtime-flow — this is the unique section static tools miss)
-   - Cross-domain concerns (auth, error handling, logging, events)
-   - AI generation rules (derived from patterns — DO and DO NOT lists)
-   - Technical debt register (all issues from all reports, deduplicated, sorted by severity)
-   - Sensitive zones (security-relevant files, fragile areas, AI caution zones)
-
-5. For every item marked in `sections_to_flag_in_constitution` in the audit report:
-   annotate the merged structure with `"confidence": "low"` and `"needs_human_review": true`
-
-6. Write merged output to `.cursor/constitution-tmp/_merged.json`
-
-7. Report: "Aggregation complete: <domain count> domains, <endpoint count> endpoints,
-   <issue count> debt items, <flagged count> sections flagged for review."
-```
-
----
-
-### 7.3 Curator Skill: `.cursor/skills/constitution-curator/SKILL.md`
-
-```markdown
----
-name: constitution-curator
-description: >
-  Reads .cursor/constitution-tmp/_merged.json and writes the final
-  docs/ai/constitution.md following the canonical template. Invoke after
-  aggregation completes.
-version: 2.0.0
----
-
-# Constitution Curator
-
-## Purpose
-
-Write `docs/ai/constitution.md` from the merged, audited intermediate data.
-This is the document that all future AI generation work will reference.
-
-## Steps
-
-1. Read `.cursor/constitution-tmp/_merged.json`
-2. Also read all `docs/ai/constitution-fragments/*.md` for narrative context
-3. Write `docs/ai/constitution.md` following the template below exactly
-4. For any section with `needs_human_review: true`: add a visible warning block
-5. Report: "Constitution written — <section count> sections, ~<word count> words"
-
-## Template
-
----
-
-# constitution.md — [Project Name] AI Generation Contract
-
-> **Version:** 1.0
-> **Generated:** [date]
-> **Method:** Cursor multi-agent analysis (domain-scanner × N, api-contract-analyst,
-> data-model-analyst, dependency-analyst, pattern-analyst, runtime-flow-analyst,
-> constitution-auditor)
-> **Overall confidence:** [from audit report]
-
----
-
-> ⚠️ **Sections marked [NEEDS REVIEW]** contain claims that the auditor could not
-> fully verify or that were contested across multiple reports. Do not treat these
-> as authoritative without human validation.
-
----
-
-## 1. Project Identity
-
-**Name:** [from package.json or inferred]
-**Type:** [Web app / API / Mobile backend / Monorepo / Library]
-**Primary language:** [language(s) with approx % split]
-**Runtime:** [Node 20.x / Python 3.11 / JVM 17 / etc. — exact version]
-**Primary framework:** [Next.js 14 / NestJS 10 / Django 4.2 / etc. — exact version]
-
-**System description:**
-[2-3 sentences: what it does, who uses it, what problem it solves — inferred from code]
-
----
-
-## 2. Architecture Overview
-
-**Architectural style:** [Clean Architecture / Layered MVC / Hexagonal / Microservices]
-**Layers:** [list layers in order with one-line description each]
-
-**Directory map:**
-```
-[reproduce key directory tree with one-line annotation per dir]
-```
-
-**Domain inventory:**
-| Domain | Path | Responsibility | Confidence |
-|--------|------|----------------|------------|
-[one row per domain from domain-scanner reports]
-
-**Cross-domain communication:** [how domains interact — direct import / events / REST / etc.]
-
----
-
-## 3. Tech Stack Contract
-
-> Treat this section as a constraint, not a suggestion. AI generation must not
-> introduce dependencies outside this list without explicit human approval.
-
-**Runtime:** [exact version]
-**Framework:** [name + exact version]
-**Package manager:** [npm/yarn/pnpm] — use exclusively, never mix
-**Monorepo tool:** [nx/turborepo/lerna/none]
-
-### Core dependencies
-| Package | Version | Role | Generation notes |
-|---------|---------|------|-----------------|
-[top 20 dependencies with role and any AI-generation notes]
-
-### Hard constraints
-- Node/Python/Java version: [exact — enforce, do not upgrade without team decision]
-- Import style: [ESM/CommonJS — do not mix]
-- [any other hard constraints from dependency-analyst]
-
----
-
-## 4. Data Model
-
-**Database:** [type]
-**ORM:** [name + version]
-**Schema location:** [`<path>`]
-
-### Entity map
-| Entity | Table/Collection | Key Relations | Notes |
-|--------|-----------------|---------------|-------|
-[one row per entity]
-
-### Data flow
-[Describe the standard path: request → controller → service → repository → DB
-and the return path. Be specific about where validation happens, where transactions start.]
-
-### Naming conventions
-- Tables: [pattern]
-- Columns: [pattern]
-- IDs: [UUID/auto-increment/ULID + where generated]
-
-### Issues [NEEDS REVIEW if flagged]
-[List from data-model audit with severity]
-
----
-
-## 5. API Contract
-
-**Style:** [REST/GraphQL/gRPC/mixed]
-**Auth:** [JWT Bearer / API key / session / OAuth2 — describe exactly]
-**Versioning:** [URL prefix /v1 / header / none]
-**Base URL pattern:** [/api/v1/...]
-
-### Endpoint inventory
-[Group by domain. For each: METHOD /path — auth requirement — brief description]
-
-### Request/Response conventions
-- Content-Type: [value]
-- Error format: [describe the standard error shape with example]
-- Pagination: [describe the pattern]
-- Dates: [ISO 8601 / Unix timestamp / etc.]
-
----
-
-## 6. Runtime Behaviour
-
-> This section captures what static analysis cannot: how the system actually
-> behaves when a request arrives. AI generation MUST respect these flows.
-
-### Entry points
-| Type | File | Description |
-|------|------|-------------|
-[from runtime-flow-analyst]
-
-### Middleware execution chain
-[List in order with purpose. This is the execution context for every request.]
-
-### Key traced flows
-[For each traced flow: name, entry point, layer-by-layer call chain, side effects]
-
-### Global side effects
-[Things that happen on every request regardless — audit logging, rate limiting, etc.]
-
-### AI generation note
-> When adding new endpoints or operations:
-> [List specific rules derived from runtime-flow analysis]
-
----
-
-## 7. Coding Conventions
-
-> These are observed conventions from the actual codebase. AI must follow them
-> when generating new code, even if they differ from framework defaults.
-
-### Naming
-- Variables/functions: [camelCase/snake_case]
-- Classes: [PascalCase]
-- Files: [kebab-case/camelCase — be specific per file type]
-- Database: [naming pattern]
-- Constants: [UPPER_SNAKE_CASE/etc.]
-- Event names: [pattern if applicable]
-
-### File organisation
-[Where does a new feature put its files? Be specific:
-"A new domain goes in src/<domain>/ with index.ts, <domain>.service.ts,
-<domain>.repository.ts, <domain>.controller.ts, and __tests__/"]
-
-### Error handling
-[Describe the established pattern: custom error class? HTTP exception layer?
-Result type? Where are errors caught, where are they thrown?]
-
-### Async pattern
-[async/await throughout / promise chains in legacy areas / etc. — be honest about inconsistency]
-
-### Logging
-[Library, log levels, what gets logged and where]
-
----
-
-## 8. Test Strategy
-
-**Framework:** [Jest/Vitest/pytest/JUnit]
-**Location:** [co-located __tests__ / separate test/ dir]
-**Required types:** [unit + integration / e2e optional]
-**Mocking approach:** [jest.mock / manual mocks / factory pattern]
-**Coverage tooling:** [istanbul/nyc/coverage-v8/etc.]
-
-### Test naming convention
-[describe the pattern: "should <verb> when <condition>"]
-
-### Non-negotiable test requirements
-[List what MUST be tested for every new feature — derived from observed patterns]
-
----
-
-## 9. AI Generation Rules
-
-> These rules are derived from actual codebase analysis. They are not aspirational —
-> they reflect what the codebase actually does. Follow them for consistent output.
-
-### DO
-[10-15 specific, file-referenced DOs]
-Examples format:
-- DO use `AppError` from `src/common/errors.ts` for all business logic errors
-- DO add request validation schemas to `src/schemas/<domain>.schema.ts` using zod
-- DO use the `BaseRepository<T>` class from `src/common/repository.ts` for DB access
-
-### DO NOT
-[10-15 specific, file-referenced DO NOTs]
-Examples format:
-- DO NOT query the database from controllers — route through service → repository
-- DO NOT use `any` type — use `unknown` with type guards or explicit interfaces
-- DO NOT hardcode environment values — use `config` from `src/config/index.ts`
-
-### New feature generation checklist
-[Step-by-step, specific to THIS project's actual structure]
-
----
-
-## 10. Technical Debt Register
-
-> Review this before starting AI-assisted work in affected areas. AI generation
-> will propagate and compound existing debt unless explicitly countered.
-
-| ID | Domain | Location | Issue | Severity | AI Risk | Recommended action |
-|----|--------|----------|-------|----------|---------|-------------------|
-[from all reports, sorted by severity × AI Risk]
-
-**AI Risk levels:**
-- **HIGH** — AI will almost certainly reproduce or worsen this if not explicitly instructed
-- **MEDIUM** — AI may reproduce this; include counter-instructions when working in this area
-- **LOW** — Cosmetic or structural issue; AI unlikely to interact with it
-
----
-
-## 11. Sensitive Zones
-
-> AI generation requires explicit human review before merging changes in these areas.
-
-[List files/directories that are: security-critical, known to be fragile,
-contain implicit contracts not visible from code, or flagged by the auditor]
-
-For each zone: path + reason + what to watch for
-
----
-
-## 12. Analysis Metadata
-
-**Scan date:** [date]
-**Cursor version:** [version]
-**Agents run:** domain-scanner ×[N], + 6 specialist agents
-**Files sampled:** ~[count]
-**Domains covered:** [count]
-
-**Confidence by section:**
-| Section | Confidence | Notes |
-|---------|------------|-------|
-[one row per major section from audit report]
-
-**Known gaps:**
-[List what this analysis did NOT cover — be honest]
-
-**Suggested re-analysis triggers:**
-- Major ORM migration added
-- New API versioning layer introduced
-- Auth strategy changed
-- New domain directory added at top level
-- Quarterly refresh regardless
-
----
-```
+Apply a targeted correction to `docs/ai/full-analysis-*.md` when the user identifies
+an inaccuracy. If the correction affects content that also appears in
+`docs/ai/CONSTITUTION.md`, update that too. Corrections are logged so they survive
+full re-runs of the pipeline.
 
 ---
 
 ## 8. Rules
 
-### 8.1 Orchestration Rule: `.cursor/rules/constitution-mode.mdc`
+### 8.1 Orchestration Rule: `rules/constitution-mode.mdc`
 
-```yaml
----
-description: >
-  Orchestration rules for the constitution generation pipeline. Apply when user
-  requests codebase analysis, constitution generation, AI readiness assessment,
-  or brownfield onboarding.
-alwaysApply: false
----
-
-# Constitution Generation Rules
-
-When generating or updating the constitution:
-
-1. ALWAYS run the `constitution` skill — never improvise the workflow
-2. ALWAYS generate/verify `.cursorignore` BEFORE spawning any subagent
-3. ALWAYS write outputs to `docs/ai/` not the project root
-4. ALWAYS spawn domain-scanner agents per directory — never one agent for the whole codebase
-5. ALWAYS run the auditor BEFORE aggregation — never skip this step
-6. NEVER write constitution.md directly from main context — go through aggregator + curator
-7. Surface audit findings to the user — never silently discard contested claims
-8. Report progress after each phase: Pre-flight → Scan → Audit → Aggregate → Curate
-9. If overall audit confidence is "low": tell the user and offer to re-run specific agents
-```
-
-### 8.2 Reference Rule: `.cursor/rules/constitution-reference.mdc`
-
-```yaml
----
-description: >
-  Inject constitution reference when working on source files. Ensures AI generation
-  always checks project conventions before producing code.
-globs: ["src/**/*.ts", "src/**/*.js", "src/**/*.py", "src/**/*.java", "src/**/*.go"]
-alwaysApply: false
----
-
-Before generating or modifying code in this project:
-
-1. Check @docs/ai/constitution.md — specifically sections 7 (Coding Conventions),
-   8 (Test Strategy), and 9 (AI Generation Rules)
-2. Verify your output complies with the DO / DO NOT rules in section 9
-3. If working in a domain listed in the Technical Debt Register (section 10):
-   read the AI Risk level and apply counter-instructions accordingly
-4. If working in a Sensitive Zone (section 11): flag for human review before completing
-5. If your generated code introduces a pattern NOT covered by the constitution:
-   note it at the end of your response as "New pattern introduced: <description>"
-```
+Enforces pipeline discipline: always run the skill, never improvise, always audit
+before aggregation, never write outputs directly.
 
 ---
 
-## 9. Drift Detection Hook: `.cursor/hooks/constitution-drift.json`
-
-This hook fires when key structural files change and flags that the constitution
-may need updating.
-
-```json
-{
-  "name": "constitution-drift-detector",
-  "description": "Flags when files that affect the constitution have changed",
-  "triggers": [
-    {
-      "event": "file_save",
-      "globs": [
-        "**/schema.prisma",
-        "**/migrations/**/*.sql",
-        "**/package.json",
-        "**/openapi.yaml",
-        "**/swagger.json",
-        "src/**/routes/**/*.ts",
-        "src/**/controllers/**/*.ts",
-        "src/**/middleware/**/*.ts"
-      ]
-    }
-  ],
-  "action": {
-    "type": "notify",
-    "message": "⚠️ Constitution drift detected: `{changed_file}` has changed. This file affects the {inferred_section} section of docs/ai/constitution.md. Consider re-running the relevant analyst:\n- Schema change → re-run data-model-analyst\n- Route/controller change → re-run api-contract-analyst + runtime-flow-analyst\n- package.json change → re-run dependency-analyst\n- Middleware change → re-run runtime-flow-analyst",
-    "severity": "warning"
-  }
-}
-```
-
-**Fallback if Cursor hooks don't fire reliably:** Add this as a git pre-commit script:
-
-```bash
-#!/bin/bash
-# .git/hooks/pre-commit — constitution drift check
-
-CONSTITUTION="docs/ai/constitution.md"
-DRIFT_FILES="schema.prisma openapi.yaml swagger.json"
-
-if [ ! -f "$CONSTITUTION" ]; then
-  echo "⚠️  No constitution found. Run /constitution to generate docs/ai/constitution.md"
-  exit 0
-fi
-
-CONSTITUTION_DATE=$(git log -1 --format="%ct" -- "$CONSTITUTION" 2>/dev/null || echo 0)
-
-for pattern in $DRIFT_FILES; do
-  CHANGED=$(git diff --cached --name-only | grep "$pattern")
-  if [ -n "$CHANGED" ]; then
-    echo "⚠️  Constitution drift: $CHANGED changed. Consider updating docs/ai/constitution.md"
-  fi
-done
-```
-
----
-
-## 10. Invocation
+## 9. Invocation
 
 Once all files are in place:
 
 ```
-Generate a constitution for this codebase
+/constitution
 ```
-or `/constitution`
+
+or: "Generate a constitution for this codebase"
 
 **Pipeline execution:**
 1. Pre-flight: `.cursorignore` verified, dirs created, codebase inventoried
-2. Scan: parallel domain scanners + 5 specialist analysts (each writes JSON + MD fragment)
+2. Scan: parallel domain scanners + 6 specialist analysts (each writes JSON + MD fragment)
 3. Audit: cross-validation of all claims
-4. Aggregate: merge with confidence annotations
-5. Curate: write `docs/ai/constitution.md`
+4. Human Q&A: targeted questions to fill audit gaps (skippable)
+5. Aggregate: merge with confidence annotations + human answers
+6. Curate: write `CONSTITUTION.md`, `full-analysis-*.md`, and viewer
 
 **Estimated time:** 10–25 minutes depending on codebase size.
 
-**Partial re-runs** (after a change affects one section):
-```
-Re-run the api-contract-analyst and update the API section of the constitution
-Re-run the runtime-flow-analyst — the middleware chain changed
-Re-run the data-model-analyst — a new migration was added
-```
-
 ---
 
-## 11. Known Limitations and Mitigations
+## 10. Known Limitations and Mitigations
 
 | Limitation | Impact | Mitigation |
 |---|---|---|
@@ -1407,70 +867,19 @@ Re-run the data-model-analyst — a new migration was added
 | Runtime-flow traces 2-3 flows only | May miss atypical paths | Choose representative flows; document which were traced |
 | No actual execution/profiling | Can't detect true hotpaths | Complement with `--prof` output or APM data if available |
 | Confidence degrades on compiled code | dist/ / build/ pollutes analysis | `.cursorignore` must exclude these before any scan |
-| Hooks still maturing in some Cursor versions | Drift detection may not fire | Use git pre-commit fallback |
-| Session-scoped subagents | Constitution drifts over time | Re-run quarterly; use drift detection hook |
+| Session-scoped subagents | Constitution may become outdated | Re-run `/constitution` when codebase changes significantly |
 | Auditor may over-contest high-confidence claims | Noise in audit report | Treat "contested" as "worth a second look", not "wrong" |
 
 ---
 
-## 12. AISDLC Plugin Manifest
-
-Package the entire system as a Cursor plugin for single-command installation on
-any client project:
-
-```json
-{
-  "name": "q-agency-brownfield-intelligence",
-  "version": "2.0.0",
-  "description": "Multi-agent codebase analysis pipeline producing docs/ai/constitution.md — Q Agency AISDLC standard",
-  "cursor_version_required": "2.4.0",
-  "skills": [
-    ".cursor/skills/constitution",
-    ".cursor/skills/constitution-aggregator",
-    ".cursor/skills/constitution-curator"
-  ],
-  "agents": [
-    ".cursor/agents/domain-scanner.md",
-    ".cursor/agents/api-contract-analyst.md",
-    ".cursor/agents/data-model-analyst.md",
-    ".cursor/agents/dependency-analyst.md",
-    ".cursor/agents/pattern-analyst.md",
-    ".cursor/agents/runtime-flow-analyst.md",
-    ".cursor/agents/constitution-auditor.md"
-  ],
-  "rules": [
-    ".cursor/rules/constitution-mode.mdc",
-    ".cursor/rules/constitution-reference.mdc"
-  ],
-  "hooks": [
-    ".cursor/hooks/constitution-drift.json"
-  ],
-  "artifacts": [
-    ".cursorignore.template",
-    ".git/hooks/pre-commit.template"
-  ],
-  "invocation": "/constitution",
-  "output": "docs/ai/constitution.md"
-}
-```
-
----
-
-*Cursor 2.4+ recommended for parallel subagent support (sequential fallback available for older versions).*
-*Cursor 2.5+ required for plugin packaging.*
-*Git pre-commit fallback works on any version.*
-*Last updated: March 2026 — v2.1 with status tracking, sequential fallback, monorepo support, versioning/diffing, and auditor improvements*
-
----
-
-## Adding a Custom Analyst Agent
+## 11. Adding a Custom Analyst Agent
 
 The pipeline is extensible — you can add new specialist agents (e.g., `security-analyst`,
 `performance-analyst`) without modifying the core framework.
 
 ### 1. Create the agent definition
 
-Create `.cursor/agents/<name>.md` following the established pattern:
+Create `agents/<name>.md` following the established pattern:
 
 ```yaml
 ---
@@ -1483,7 +892,7 @@ tools: Read, Glob, Grep, Bash
 ```
 
 Required sections in the agent body:
-- **Status tracking** — write `_status-<name>.json` on start/completion (see any existing agent for the pattern)
+- **Status tracking** — write `_status-<name>.json` on start/completion
 - **When invoked** — numbered steps for what the agent does
 - **JSON output** — schema for `.cursor/constitution-tmp/<name>.json` (must include `"confidence": "high|medium|low"`)
 - **Markdown fragment** — template for `docs/ai/constitution-fragments/<name>.md`
@@ -1491,28 +900,28 @@ Required sections in the agent body:
 
 ### 2. Register the agent in the orchestrator
 
-Edit `.cursor/skills/constitution/SKILL.md`, Phase 1:
+Edit `skills/constitution/SKILL.md`, Phase 1:
 - Add your agent to the "Specialist analysts" spawn list
 - Add it to the `expected_agents` list in Phase 0e
 
 ### 3. Update the aggregator
 
-Edit `.cursor/skills/constitution-aggregator/SKILL.md`, Step 3:
+Edit `skills/constitution-aggregator/SKILL.md`, Step 3:
 - Add your agent's JSON file to the read order
 - Map its data into the appropriate constitution section(s) in Step 4
 
 ### 4. Update the curator (if adding a new constitution section)
 
-If your agent produces data that warrants a new constitution section:
-- Add the section template to `.cursor/skills/constitution-curator/SKILL.md`
+If your agent produces data that warrants a new section in the full analysis:
+- Add the section template to `skills/constitution-curator/SKILL.md`
 - Add a corresponding entry in the viewer's Section IDs table
 
 ### 5. Update the auditor scope
 
-Edit `.cursor/agents/constitution-auditor.md`:
+Edit `agents/constitution-auditor.md`:
 - Add your agent's report to the cross-validation checks in step 5
 
-### 6. Update install.sh
+---
 
-The installer automatically copies all `.md` files from `.cursor/agents/`,
-so no change is needed unless you add new directories or files outside agents/.
+*Cursor 2.4+ recommended for parallel subagent support (sequential fallback available for older versions).*
+*Last updated: March 2026 — v3.0 with two-tier output (CONSTITUTION.md + full-analysis), no drift/incremental.*

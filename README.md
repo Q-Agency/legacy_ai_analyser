@@ -1,7 +1,8 @@
 # Cursor Constitution Generator
 
 A Cursor plugin that analyses a brownfield codebase and produces
-`docs/ai/constitution.md` — a current-system truth layer for downstream AI workflows.
+`docs/ai/CONSTITUTION.md` — a compact cornerstone for downstream AI workflows —
+backed by a detailed `docs/ai/full-analysis-YYYY-MM-DD.md` reference document.
 
 The constitution grounds later stages:
 - spec creation (`what` should change)
@@ -55,10 +56,6 @@ After installing the plugin, run this one-time setup in your target project:
 ```bash
 # Copy baseline .cursorignore (if you don't have one already)
 cp /path/to/plugin/.cursorignore .cursorignore
-
-# Optional: add git hook for drift detection
-cp /path/to/plugin/pre-commit-hook.sh .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
 ```
 
 Then open the project in Cursor and type in agent chat:
@@ -71,7 +68,7 @@ Generate a constitution for this codebase
 
 ## After installing
 
-### Step 1 — Set up your target project
+### Step 1 — Run the analysis
 
 Open your legacy project in Cursor. In agent chat, run:
 
@@ -83,16 +80,17 @@ This triggers the full analysis pipeline. The agent will:
 1. Check and generate `.cursorignore` (excludes noise from analysis)
 2. Scan the codebase with parallel specialist agents
 3. Audit findings for consistency and confidence
-4. Aggregate and curate the final constitution
+4. Ask you targeted questions to fill gaps the analysis couldn't resolve (skippable)
+5. Aggregate and curate the final outputs
 
 ### Step 2 — Review the output
 
 Once complete, four files are written into your project:
 
-- `docs/ai/constitution.md` — the full 13-section constitution
-- `docs/ai/constitution-cheatsheet.md` — condensed version injected into AI context automatically
+- `docs/ai/CONSTITUTION.md` — the compact cornerstone (~600-800 words) for all downstream agents
+- `docs/ai/constitution.json` — machine-readable constitution for downstream agent lookups
+- `docs/ai/full-analysis-YYYY-MM-DD.md` — the detailed 13-section reference document
 - `docs/ai/constitution-viewer.html` — interactive browser UI (see below)
-- `docs/ai/constitution-changelog.md` — diff from previous run (created from second run onwards)
 
 #### The interactive viewer
 
@@ -107,24 +105,32 @@ It gives you:
 - Sensitive zones with human review flags
 - DO / DO NOT rules in a split-column layout
 
-This is the easiest way to review the constitution before using it as a downstream base. Share it with your team as a single HTML file.
+This is the easiest way to review the full analysis before using the constitution as a downstream base. Share it with your team as a single HTML file.
 
 Check sections marked `[NEEDS REVIEW]` — these are areas where the analysis found low confidence or contested claims. Human validation is needed before relying on them downstream.
 
 ### Step 3 — Use it in your workflow
 
-The constitution is now the base context for downstream AI work:
+`CONSTITUTION.md` is now the base context for downstream AI work:
 
 - **Spec** — ask the AI what should change; it will use the constitution to understand current constraints
 - **Design** — ask the AI how to implement it; it will respect existing architecture, patterns, and invariants
-- **Tasks / Dev / QA** — the `constitution-reference` rule auto-injects the cheatsheet when you work on source files
+- **Tasks / Dev / QA** — your downstream agents reference `CONSTITUTION.md` directly
+
+For deep dives (full data model, endpoint inventory, runtime traces, debt register),
+reference the detailed `docs/ai/full-analysis-*.md`.
+
+For structured lookups in agent code (e.g. "what ORM?", "what auth?", "list DO NOT rules"),
+use `docs/ai/constitution.json` — a machine-readable version of the constitution.
+
+For detailed integration patterns per downstream stage (spec, design, tasks, implementation, QA),
+see [docs/DOWNSTREAM-GUIDE.md](docs/DOWNSTREAM-GUIDE.md).
 
 ### Keeping it up to date
 
 | Situation | Command |
 |-----------|---------|
 | Code changed significantly | `/constitution` — full re-run |
-| Small targeted change (schema, routes, deps) | `/constitution-incremental` — re-runs only affected agents |
 | You found an error in the constitution | `/constitution-patch` — corrects a specific claim, survives re-runs |
 
 ---
@@ -147,17 +153,14 @@ constitution-generator/
 ├── skills/
 │   ├── constitution/SKILL.md               ← Master orchestrator (/constitution)
 │   ├── constitution-aggregator/SKILL.md    ← Merges verified reports
-│   ├── constitution-curator/SKILL.md       ← Writes final constitution.md
-│   ├── constitution-patch/SKILL.md         ← Manual corrections (/constitution-patch)
-│   └── constitution-incremental/SKILL.md  ← Incremental updates (/constitution-incremental)
+│   ├── constitution-curator/SKILL.md       ← Writes CONSTITUTION.md + full analysis + JSON
+│   └── constitution-patch/SKILL.md         ← Manual corrections (/constitution-patch)
+├── docs/
+│   └── DOWNSTREAM-GUIDE.md                 ← Integration patterns for downstream agents
 ├── rules/
-│   ├── constitution-mode.mdc               ← Pipeline discipline rules
-│   └── constitution-reference.mdc          ← Auto-checks constitution on code edits
-├── hooks/
-│   ├── constitution-drift.json             ← Drift detection hook
-│   └── constitution-drift-check.sh         ← Drift detection script
+│   └── constitution-mode.mdc               ← Pipeline discipline rules
 ├── .cursorignore                           ← Baseline exclusions template (copy to your project)
-└── pre-commit-hook.sh                      ← Git hook template (copy to your project)
+└── install.sh                              ← Manual install script (non-plugin branch)
 ```
 
 ---
@@ -173,11 +176,14 @@ constitution-generator/
 
 ## What it produces (in your project)
 
-- `docs/ai/constitution.md` — full 13-section constitution with section-level confidence,
-  evidence sources, and downstream-use guidance
-- `docs/ai/constitution-cheatsheet.md` — condensed ~500-800 word version for agent context injection
-- `docs/ai/constitution-viewer.html` — self-contained interactive browser UI
-- `docs/ai/constitution-changelog.md` — section-by-section diff on re-runs
+- `docs/ai/CONSTITUTION.md` — compact cornerstone (~600-800 words) with DO/DO NOT rules,
+  tech stack, patterns, naming, and testing rules for all downstream agents.
+  Fixed 10-section structure that downstream agents can depend on.
+- `docs/ai/constitution.json` — machine-readable constitution for structured lookups
+  (ORM, auth strategy, DO/DO NOT rules, tech stack, etc.)
+- `docs/ai/full-analysis-YYYY-MM-DD.md` — full 13-section analysis with section-level
+  confidence, evidence sources, and downstream-use guidance
+- `docs/ai/constitution-viewer.html` — self-contained interactive browser UI of the full analysis
 
 ---
 
@@ -185,8 +191,8 @@ constitution-generator/
 
 ```mermaid
 flowchart TD
-    User(["👤 User\n/constitution"])
-    Orch["🎯 Orchestrator\nskills/constitution/SKILL.md"]
+    User(["User\n/constitution"])
+    Orch["Orchestrator\nskills/constitution/SKILL.md"]
 
     subgraph Phase0["Phase 0 — Pre-flight"]
         PF1["Generate .cursorignore"]
@@ -211,35 +217,41 @@ flowchart TD
         AUD["constitution-auditor\n(cross-validates all reports)"]
     end
 
+    subgraph Phase25["Phase 2.5 — Human Q&A"]
+        QA["Targeted questions from\naudit gaps + low-confidence\nsections + missing context"]
+        ANS["_human-answers.json"]
+        QA --> ANS
+    end
+
     subgraph Phase3["Phase 3 — Aggregate"]
-        AGG["constitution-aggregator\nskill\n(merges JSON reports +\naudit findings)"]
+        AGG["constitution-aggregator\nskill\n(merges JSON reports +\naudit findings +\nhuman answers)"]
         MRG[".cursor/constitution-tmp/_merged.json"]
         AGG --> MRG
     end
 
     subgraph Phase4["Phase 4 — Curate"]
-        CUR["constitution-curator\nskill\n(writes final MD from merged JSON)"]
+        CUR["constitution-curator\nskill\n(writes outputs from merged JSON)"]
     end
 
     subgraph Output["Output — docs/ai/"]
-        O1["constitution.md\n(13-section full doc)"]
-        O2["constitution-cheatsheet.md\n(auto-injected into AI context)"]
+        O1["CONSTITUTION.md\n(compact cornerstone)"]
+        O1b["constitution.json\n(machine-readable)"]
+        O2["full-analysis-YYYY-MM-DD.md\n(detailed 13-section reference)"]
         O3["constitution-viewer.html\n(interactive browser UI)"]
-        O4["constitution-changelog.md\n(diff vs previous run)"]
     end
 
     User --> Orch --> Phase0 --> Phase1
-    Phase1 --> Phase2 --> Phase3 --> Phase4 --> Output
+    Phase1 --> Phase2 --> Phase25 --> Phase3 --> Phase4 --> Output
 
     style Phase0 fill:#1e3a5f,color:#fff
     style Phase1 fill:#1a3a2a,color:#fff
     style Phase2 fill:#3a1a1a,color:#fff
+    style Phase25 fill:#3a2a1a,color:#fff
     style Phase3 fill:#2a1a3a,color:#fff
     style Phase4 fill:#1a2a3a,color:#fff
     style Output fill:#2a3a1a,color:#fff
 ```
 
-- Incremental mode: `/constitution-incremental` — re-runs only agents affected by recent changes
 - Manual corrections: `/constitution-patch` — corrections persist across re-runs
 - Monorepo scaling: wave execution for large workspaces
 - Sequential fallback: automatic for older Cursor versions
@@ -252,5 +264,5 @@ Estimated time: 10–25 min (parallel) or 30–60 min (sequential) depending on 
 
 | Branch | Purpose |
 |--------|---------|
-| `main` | Cursor plugin format — install via Cursor Marketplace |
+| `main` | Cursor plugin format — install via Cursor Marketplace or `/add-plugin` |
 | `non-plugin` | Legacy `install.sh` format — copy files directly into your project |

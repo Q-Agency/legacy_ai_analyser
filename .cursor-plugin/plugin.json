@@ -1,9 +1,8 @@
 {
   "name": "constitution-generator",
-  "description": "Multi-agent brownfield constitution generator. Analyses a legacy codebase and produces docs/ai/constitution.md — a current-system truth layer for downstream AI workflows (spec, design, tasks, dev, QA).",
-  "version": "2.2.0",
+  "description": "Multi-agent brownfield constitution generator. Analyses a legacy codebase and produces docs/ai/CONSTITUTION.md (compact cornerstone) and docs/ai/full-analysis-YYYY-MM-DD.md (detailed reference) for downstream AI workflows.",
+  "version": "3.0.0",
   "author": { "name": "Q Agency" },
   "repository": "https://github.com/zlatkomq/legacy_ai_analyser",
-  "keywords": ["brownfield", "analysis", "constitution", "ai-workflow", "legacy"],
-  "hooks": "hooks/hooks.json"
+  "keywords": ["brownfield", "analysis", "constitution", "ai-workflow", "legacy"]
 }

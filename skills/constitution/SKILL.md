@@ -27,8 +27,8 @@ mkdir -p docs/ai/constitution-fragments
 ```
 
 ### 0b. Generate .cursorignore
-If `.cursorignore` does not exist, create it now using the baseline template from
-section 5 of this architecture guide. If it exists, read it and confirm it covers:
+If `.cursorignore` does not exist, create one covering the standard exclusions below.
+If it exists, read it and confirm it covers:
 - node_modules/, dist/, build/, coverage/
 - *.lock, *.generated.*, *.min.js
 - .env, *.pem, secrets/
@@ -220,7 +220,7 @@ context. Execute in this order (dependencies inform later agents):
 6. `runtime-flow-analyst` — actual call chains and middleware
 7. `infra-analyst` — infrastructure and deployment config
 
-For each: read the agent definition from `.cursor/agents/<name>.md`, follow its
+For each: read the agent definition (the `.md` file for that agent), follow its
 instructions exactly, write the same output files. Update the agent's status file
 after each completes.
 
@@ -236,6 +236,93 @@ Spawn `constitution-auditor`.
 Check for `_status-constitution-auditor.json` with `"status": "complete"`.
 Report audit results to user: "Audit complete: <confidence>, <count> contested claims."
 If overall_confidence is "low": ask user if they want to re-run specific agents.
+
+## Phase 2.5: Human Q&A (gap resolution)
+
+Update `_pipeline.json` → `"phase": "human-qa"`.
+
+After the audit, the pipeline knows what is strong and what is weak. Before
+aggregating, present the user with targeted questions to fill the gaps that
+automated analysis could not resolve.
+
+### Build the question list
+
+Read `audit-report.json` and all agent reports. Compile questions from these sources:
+
+1. **Contested claims** — for each contested claim with recommendation `verify-manually`:
+   ask the user which version is correct (quote both sides)
+2. **Critical gaps** — for each gap the auditor flagged: ask the user to provide
+   the missing information or confirm it is genuinely unknown
+3. **Low-confidence sections** — for each section flagged `needs_human_review`:
+   ask a specific question about the uncertain claim (not a vague "is this right?")
+4. **Ambiguous architecture decisions** — if the pattern-analyst found mixed patterns
+   or the runtime-flow-analyst couldn't determine the auth strategy: ask directly
+5. **Missing context the code can't reveal** — ask about:
+   - Business domain purpose (if unclear from code alone)
+   - Deployment environment specifics (if no infra files found)
+   - Team conventions not enforced in code (PR review rules, branch strategy)
+   - Planned deprecations or migrations in progress
+   - External systems the codebase integrates with that have no client code yet
+
+### Present questions
+
+Group questions by section and present them as a numbered list:
+
+```
+Before writing the final constitution, I have <N> questions to fill gaps
+the automated analysis couldn't resolve. You can answer as many as you want
+— anything left unanswered will be marked [UNRESOLVED] in the output.
+
+### Architecture & Patterns
+1. [question]
+2. [question]
+
+### Data Model
+3. [question]
+
+### Runtime & Infrastructure
+4. [question]
+
+### Business Context
+5. [question]
+...
+```
+
+### Process answers
+
+Wait for the user to respond. They may:
+- Answer all questions
+- Answer some and skip others
+- Say "skip" or "none" to skip the phase entirely
+
+For each answer:
+- Write it to `.cursor/constitution-tmp/_human-answers.json`:
+
+```json
+{
+  "answers": [
+    {
+      "question_id": "q-001",
+      "section": "<constitution section>",
+      "question": "<what was asked>",
+      "answer": "<user's response>",
+      "source": "human"
+    }
+  ],
+  "skipped": ["q-003", "q-005"],
+  "timestamp": "<ISO 8601>"
+}
+```
+
+For skipped questions: record them so the aggregator can mark those gaps as
+`[UNRESOLVED]` rather than `[NEEDS REVIEW]` (the human chose not to answer,
+which is different from "the analysis was uncertain").
+
+### If the user skips entirely
+
+Write `_human-answers.json` with an empty `answers` array and all questions in
+`skipped`. Proceed to aggregation — the output will have more `[NEEDS REVIEW]`
+sections but will still be functional.
 
 ## Phase 3: Aggregate
 
@@ -253,20 +340,17 @@ Update `_pipeline.json` → `"phase": "complete"`.
 
 1. Verify `docs/ai/full-analysis-YYYY-MM-DD.md` exists (dated reference document)
 2. Verify `docs/ai/CONSTITUTION.md` exists (compact cornerstone for downstream agents)
-3. Verify `docs/ai/constitution-viewer.html` exists
-4. Report section count and word estimate for full analysis and CONSTITUTION.md
-5. Report: "Viewer available at docs/ai/constitution-viewer.html — open in browser"
+3. Verify `docs/ai/constitution.json` exists (machine-readable constitution for downstream agents)
+4. Verify `docs/ai/constitution-viewer.html` exists
+5. Report section count and word estimate for full analysis and CONSTITUTION.md
+6. Report: "Viewer available at docs/ai/constitution-viewer.html — open in browser"
 6. Ask: "Would you like to expand any section or re-run specific analysts?"
 7. Preserve `_corrections.json`: if `.cursor/constitution-tmp/_corrections.json` exists,
    ensure `docs/ai/constitution-corrections.json` is up to date before any cleanup
 8. Report correction count: if corrections exist, report how many were applied during this run
-9. Write `_scan-metadata.json`: record `last_scan_commit` (current HEAD SHA),
-   `last_scan_timestamp`, `scan_type: "full"`, `agents_run` (all agents), and
-   `agent_file_coverage` (mapping each agent to the files it read, from `files_read_list`
-   in each agent's status/output). This enables future incremental updates.
-10. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
-    (keep `docs/ai/constitution-fragments/`, `docs/ai/constitution-corrections.json`,
-    and `.cursor/constitution-tmp/_scan-metadata.json` — these are useful for re-runs)
+9. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
+   (keep `docs/ai/constitution-fragments/` and `docs/ai/constitution-corrections.json`
+   — these are useful for re-runs)
 
 ## Error handling
 

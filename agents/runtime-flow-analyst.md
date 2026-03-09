@@ -19,7 +19,7 @@ On start, write `.cursor/constitution-tmp/_status-runtime-flow-analyst.json`:
 ```json
 { "agent": "runtime-flow-analyst", "status": "running", "started_at": "<ISO timestamp>" }
 ```
-On completion, update to `"status": "complete"` with `"completed_at"`, `"output_files"`, and `"files_read_list"` (array of all file paths read during analysis — enables incremental mode file-to-agent mapping).
+On completion, update to `"status": "complete"` with `"completed_at"`, `"output_files"`, and `"files_read_list"` (array of all file paths read during analysis).
 On fatal error, update to `"status": "failed"` with `"error"` description.
 
 ## When invoked

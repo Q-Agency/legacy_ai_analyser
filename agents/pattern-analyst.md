@@ -15,19 +15,28 @@ On start, write `.cursor/constitution-tmp/_status-pattern-analyst.json`:
 ```json
 { "agent": "pattern-analyst", "status": "running", "started_at": "<ISO timestamp>" }
 ```
-On completion, update to `"status": "complete"` with `"completed_at"`, `"output_files"`, and `"files_read_list"` (array of all file paths read during analysis — enables incremental mode file-to-agent mapping).
+On completion, update to `"status": "complete"` with `"completed_at"`, `"output_files"`, and `"files_read_list"` (array of all file paths read during analysis).
 On fatal error, update to `"status": "failed"` with `"error"` description.
 
 ## When invoked
 
 1. Write your status file with `"status": "running"`
-2. Read 3-5 representative files from each major domain
-3. Identify architectural style: MVC, Clean Architecture, Hexagonal, CQRS, etc.
-4. Detect design patterns: Repository, Service, Factory, Observer, etc.
-5. Map coding conventions: naming, file organisation, error handling, async style
-6. Find anti-patterns: God classes, deep coupling, missing abstraction layers
-7. Identify where conventions break down (inconsistency = tech debt)
-8. Map test strategy: unit/integration/e2e ratio, mocking approach
+2. Build a deterministic, ignore-aware inventory of source files using tools that
+   respect `.cursorignore` (prefer `Glob`/`Grep`, not raw shell `find`/`grep` as
+   the primary inventory). Sort all discovered paths lexicographically.
+3. Select representative files using a stable strategy:
+   - From each major domain/directory, pick boundary files first (index.*, main.*,
+     app.*, and any files with "service", "controller", "repository", "factory",
+     "handler" in the name)
+   - Then pick 2-3 implementation files from each domain
+   - Record which files were selected and why in `coverage_notes`
+4. Identify architectural style: MVC, Clean Architecture, Hexagonal, CQRS, etc.
+5. Detect design patterns: Repository, Service, Factory, Observer, Middleware, etc.
+6. Map coding conventions: naming, file organisation, error handling, async style
+7. Find anti-patterns: God classes, deep coupling, missing abstraction layers,
+   inconsistent conventions across domains
+8. Identify where conventions break down (inconsistency = tech debt)
+9. Map test strategy: unit/integration/e2e ratio, mocking approach, coverage gaps
 
 ## JSON output — `.cursor/constitution-tmp/patterns.json`
 
@@ -35,7 +44,7 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
 {
   "architectural_style": "<description>",
   "design_patterns": [
-    { "pattern": "<n>", "locations": ["<file>"], "consistency": "high|medium|low" }
+    { "pattern": "<name>", "locations": ["<file>"], "consistency": "high|medium|low" }
   ],
   "coding_conventions": {
     "naming": "<description>",
@@ -44,15 +53,17 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
     "async_pattern": "async/await|promises|callbacks|mixed"
   },
   "anti_patterns": [
-    { "pattern": "<n>", "locations": ["<file>"], "severity": "high|medium|low" }
+    { "pattern": "<name>", "locations": ["<file>"], "severity": "high|medium|low" }
   ],
   "test_strategy": {
     "types": ["unit", "integration", "e2e"],
-    "framework": "<n>",
+    "framework": "<name>",
     "coverage_estimate": "<description>",
     "gaps": ["<description>"]
   },
-  "confidence": "high|medium|low"
+  "confidence": "high|medium|low",
+  "coverage_notes": ["<which domains were sampled, how files were selected, what was skipped>"],
+  "evidence_files": ["<key files that prove the architectural and pattern claims>"]
 }
 ```
 
@@ -84,3 +95,12 @@ On fatal error, update to `"status": "failed"` with `"error"` description.
 ```
 
 Write both output files, update your status file to `"status": "complete"`, then respond: "pattern-analyst complete"
+
+## Rules
+
+- Use ignore-aware discovery; do NOT rely on raw `find` or `grep` as the primary inventory
+- Use a stable file selection strategy so reruns on the same codebase produce similar results
+- Do NOT summarise patterns you haven't verified by reading actual source files
+- Confidence = "low" if you couldn't read files from more than half the domains
+- Keep `evidence_files` focused on files that best demonstrate the dominant architectural
+  style and the most impactful anti-patterns
