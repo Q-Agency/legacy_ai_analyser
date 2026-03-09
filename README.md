@@ -183,8 +183,60 @@ constitution-generator/
 
 ## Pipeline
 
-```
-Pre-flight → Parallel Scan (up to 14 agents) → Audit → Aggregate → Curate
+```mermaid
+flowchart TD
+    User(["👤 User\n/constitution"])
+    Orch["🎯 Orchestrator\nskills/constitution/SKILL.md"]
+
+    subgraph Phase0["Phase 0 — Pre-flight"]
+        PF1["Generate .cursorignore"]
+        PF2["Detect monorepo structure\n(pnpm / npm / nx / turbo / lerna)"]
+        PF3["Inventory codebase\n(ignore-aware Glob/Grep)"]
+        PF4["Write _pipeline.json"]
+        PF1 --> PF2 --> PF3 --> PF4
+    end
+
+    subgraph Phase1["Phase 1 — Parallel Scan (up to 14 subagents)"]
+        direction LR
+        DS["domain-scanner\n(one per directory)"]
+        API["api-contract-analyst"]
+        DM["data-model-analyst"]
+        DEP["dependency-analyst"]
+        PAT["pattern-analyst"]
+        RT["runtime-flow-analyst"]
+        INFRA["infra-analyst"]
+    end
+
+    subgraph Phase2["Phase 2 — Audit"]
+        AUD["constitution-auditor\n(cross-validates all reports)"]
+    end
+
+    subgraph Phase3["Phase 3 — Aggregate"]
+        AGG["constitution-aggregator\nskill\n(merges JSON reports +\naudit findings)"]
+        MRG[".cursor/constitution-tmp/_merged.json"]
+        AGG --> MRG
+    end
+
+    subgraph Phase4["Phase 4 — Curate"]
+        CUR["constitution-curator\nskill\n(writes final MD from merged JSON)"]
+    end
+
+    subgraph Output["Output — docs/ai/"]
+        O1["constitution.md\n(13-section full doc)"]
+        O2["constitution-cheatsheet.md\n(auto-injected into AI context)"]
+        O3["constitution-viewer.html\n(interactive browser UI)"]
+        O4["constitution-changelog.md\n(diff vs previous run)"]
+    end
+
+    User --> Orch --> Phase0 --> Phase1
+    Phase1 --> Phase2 --> Phase3 --> Phase4 --> Output
+
+    style Phase0 fill:#1e3a5f,color:#fff
+    style Phase1 fill:#1a3a2a,color:#fff
+    style Phase2 fill:#3a1a1a,color:#fff
+    style Phase3 fill:#2a1a3a,color:#fff
+    style Phase4 fill:#1a2a3a,color:#fff
+    style Output fill:#2a3a1a,color:#fff
 ```
 
 - Incremental mode: `/constitution-incremental` — re-runs only agents affected by recent changes
