@@ -87,11 +87,27 @@ This triggers the full analysis pipeline. The agent will:
 
 ### Step 2 — Review the output
 
-Once complete, three files are written into your project:
+Once complete, four files are written into your project:
 
-- `docs/ai/constitution.md` — the full constitution (open this to review)
+- `docs/ai/constitution.md` — the full 13-section constitution
 - `docs/ai/constitution-cheatsheet.md` — condensed version injected into AI context automatically
-- `docs/ai/constitution-viewer.html` — open in a browser for an interactive view
+- `docs/ai/constitution-viewer.html` — interactive browser UI (see below)
+- `docs/ai/constitution-changelog.md` — diff from previous run (created from second run onwards)
+
+#### The interactive viewer
+
+Open `docs/ai/constitution-viewer.html` directly in any browser — no server needed, no dependencies.
+
+It gives you:
+- A searchable sidebar with all 13 constitution sections
+- Colour-coded confidence badges per section (green / amber / red)
+- HTTP method badges on endpoint tables
+- Highlighted `[NEEDS REVIEW]` warnings
+- Technical debt register with AI-risk levels
+- Sensitive zones with human review flags
+- DO / DO NOT rules in a split-column layout
+
+This is the easiest way to review the constitution before using it as a downstream base. Share it with your team as a single HTML file.
 
 Check sections marked `[NEEDS REVIEW]` — these are areas where the analysis found low confidence or contested claims. Human validation is needed before relying on them downstream.
 
