@@ -20,7 +20,22 @@ a Prepare → Map → Audit → Reduce → Curate pipeline using parallel Cursor
 
 ## Phase 0: Pre-flight (do this before spawning any subagent)
 
-### 0a. Create directory structure
+### 0a. Clean stale runs and create directory structure
+
+If `.cursor/constitution-tmp/` already exists from a previous run, clean it to
+prevent stale status files from causing false completion signals:
+
+```bash
+# Remove stale status and pipeline files — keep _corrections.json (user work)
+rm -f .cursor/constitution-tmp/_status-*.json
+rm -f .cursor/constitution-tmp/_pipeline.json
+rm -f .cursor/constitution-tmp/_merged.json
+rm -f .cursor/constitution-tmp/_human-answers.json
+# Keep _corrections.json — it contains user corrections that must survive re-runs
+```
+
+Then create directories (idempotent):
+
 ```bash
 mkdir -p .cursor/constitution-tmp
 mkdir -p docs/ai/constitution-fragments
@@ -144,7 +159,6 @@ Write `.cursor/constitution-tmp/_pipeline.json` to track the overall pipeline:
 {
   "started_at": "<ISO timestamp>",
   "phase": "scan",
-  "mode": "parallel|sequential",
   "scan_type": "full",
   "workspace": null,
   "expected_agents": [
@@ -165,17 +179,9 @@ If workspace structure was detected in 0c, populate the `"workspace"` field.
 Each agent will write its own status file (`_status-<name>.json`) on completion,
 so there are no concurrent write conflicts.
 
-### 0f. Determine execution mode
+## Phase 1: Parallel scan
 
-**Parallel mode** (default): requires Cursor 2.4+ with subagent support.
-**Sequential mode** (fallback): for older Cursor versions or when parallel spawning fails.
-
-Attempt to spawn a single test subagent. If subagent spawning works, use parallel mode.
-If it fails, fall back to sequential mode. Record the mode in `_pipeline.json`.
-
-## Phase 1: Parallel scan (default mode)
-
-Spawn these agents simultaneously (all can run in parallel):
+Spawn these agents simultaneously (all run in parallel with isolated context windows):
 
 **Domain scanners** — one instance per domain directory (or group):
 - Tell each: "Scan the directory `<path>` as domain `<label>`"
@@ -206,28 +212,6 @@ Each agent writes its own status file on completion. Verify every agent listed i
 user and offer to retry that agent.
 
 Wait for ALL phase 1 agents to complete before moving to phase 2.
-
-## Phase 1-SEQ: Sequential scan (fallback for older Cursor versions)
-
-If parallel subagents are unavailable, run each agent sequentially in the main
-context. Execute in this order (dependencies inform later agents):
-
-1. `dependency-analyst` — sets the tech stack frame
-2. `pattern-analyst` — identifies architecture and conventions
-3. Domain-scanner instances — one at a time, per domain directory
-4. `data-model-analyst` — schemas and entities
-5. `api-contract-analyst` — API surfaces
-6. `runtime-flow-analyst` — actual call chains and middleware
-7. `infra-analyst` — infrastructure and deployment config
-
-For each: read the agent definition (the `.md` file for that agent), follow its
-instructions exactly, write the same output files. Update the agent's status file
-after each completes.
-
-Report progress to the user after each agent: "Sequential scan: <N>/<total> agents
-complete (<current agent name>)."
-
-After all agents complete, proceed to Phase 2 (Audit) as normal.
 
 ## Phase 2: Audit
 
@@ -285,7 +269,11 @@ the automated analysis couldn't resolve. You can answer as many as you want
 
 ### Business Context
 5. [question]
-...
+
+### Open input
+<N+1>. Is there anything else the constitution should capture? Rules, constraints,
+conventions, or context that the analysis may have missed — add anything you
+consider important for downstream AI agents to know.
 ```
 
 ### Process answers
@@ -309,6 +297,7 @@ For each answer:
       "source": "human"
     }
   ],
+  "free_form": "<user's open input response, or null if skipped>",
   "skipped": ["q-003", "q-005"],
   "timestamp": "<ISO 8601>"
 }

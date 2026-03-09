@@ -10,7 +10,7 @@ spec, design, task composition, development, and QA.
 → Use the `/constitution` skill (or read and follow `skills/constitution/SKILL.md`).
 → Do NOT improvise or write a constitution directly. The skill defines a
   Prepare → Scan → Audit → Aggregate → Curate pipeline with parallel subagents.
-→ Parallel mode requires Cursor 2.4+. Sequential fallback runs automatically on older versions.
+→ Requires Cursor 2.4+ (parallel subagents).
 → Monorepo/workspace projects are auto-detected (pnpm, npm, nx, turbo, lerna).
 → Pipeline progress is tracked via `_status-*.json` files in `.cursor/constitution-tmp/`.
 → Use `/constitution-patch` to correct errors — corrections survive re-runs.

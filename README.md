@@ -167,8 +167,7 @@ constitution-generator/
 
 ## Requirements
 
-- **Cursor 2.4+** recommended (parallel subagent support)
-- **Cursor < 2.4** supported via sequential fallback mode (slower but functional)
+- **Cursor 2.4+** required (parallel subagent support)
 - An existing codebase to analyse
 - Monorepo/workspace projects supported (pnpm, npm, nx, turbo, lerna)
 
@@ -254,9 +253,8 @@ flowchart TD
 
 - Manual corrections: `/constitution-patch` — corrections persist across re-runs
 - Monorepo scaling: wave execution for large workspaces
-- Sequential fallback: automatic for older Cursor versions
 
-Estimated time: 10–25 min (parallel) or 30–60 min (sequential) depending on codebase size.
+Estimated time: 10–25 min depending on codebase size.
 
 ---
 

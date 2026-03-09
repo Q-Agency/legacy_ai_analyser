@@ -926,5 +926,5 @@ Edit `agents/constitution-auditor.md`:
 
 ---
 
-*Cursor 2.4+ recommended for parallel subagent support (sequential fallback available for older versions).*
+*Requires Cursor 2.4+ for parallel subagent support.*
 *Last updated: March 2026 — v3.0 with two-tier output (CONSTITUTION.md + full-analysis), no drift/incremental.*

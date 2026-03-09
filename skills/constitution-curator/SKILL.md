@@ -4,6 +4,7 @@ description: >
   Reads .cursor/constitution-tmp/_merged.json and writes the final outputs:
   docs/ai/full-analysis-YYYY-MM-DD.md (detailed reference),
   docs/ai/CONSTITUTION.md (compact cornerstone for downstream agents),
+  docs/ai/constitution.json (machine-readable constitution),
   docs/ai/constitution-viewer.html (interactive viewer from full analysis).
   Invoke after aggregation completes.
 version: 3.0.0
@@ -508,8 +509,42 @@ the data downstream agents need, in a stable schema they can depend on.
 ### Generation instructions
 
 1. Read `.cursor/constitution-tmp/_merged.json` (same source as other outputs)
-2. Transform into the schema below, applying the same audit/confidence data
+2. Transform into the schema below using the field mapping table
 3. Write to `docs/ai/constitution.json`
+
+### Field mapping (`_merged.json` → `constitution.json`)
+
+| `constitution.json` key | Source in `_merged.json` |
+|---|---|
+| `project.name` | `system_identity.name` |
+| `project.type` | `system_identity.type` |
+| `project.language` | `system_identity.primary_language` |
+| `project.runtime` | `system_identity.runtime` |
+| `project.framework` | `system_identity.framework` |
+| `project.package_manager` | `system_identity.package_manager` |
+| `project.module_format` | `system_identity.module_format` |
+| `project.monorepo_tool` | `system_identity.monorepo_tool` |
+| `architecture.style` | `architecture.style` |
+| `architecture.layers` | `architecture.layers[].name` |
+| `architecture.domains` | `architecture.domains[]` (name, path, responsibility) |
+| `architecture.cross_domain_communication` | `architecture.cross_domain_communication` |
+| `tech_stack` | `tech_stack.key_dependencies[]` |
+| `design_patterns` | `design_patterns.patterns[]` |
+| `file_structure.new_feature_template` | `coding_conventions.file_organisation` |
+| `file_structure.directories` | Derived from `architecture.directory_map` |
+| `naming` | `coding_conventions.naming` (map `variables_functions`→`variables`) |
+| `code_rules.error_handling` | `coding_conventions.error_handling` |
+| `code_rules.async_pattern` | `coding_conventions.async_pattern` |
+| `code_rules.import_style` | `system_identity.module_format` |
+| `code_rules.state_management` | Derived from `design_patterns` (if applicable, else `null`) |
+| `testing` | `test_strategy.*` |
+| `rules.do` | `ai_generation_rules.do` |
+| `rules.do_not` | `ai_generation_rules.do_not` |
+| `data_model` | `data_model` (database_type, orm, entities — name/table/key_relations only) |
+| `api` | `api_surface` (style, auth_strategy, versioning, base_url_pattern) |
+| `sensitive_zones` | `sensitive_zones.zones[]` |
+| `confidence.overall` | `overall_confidence` |
+| `confidence.sections` | Each section's `_meta.confidence` + `_meta.needs_human_review` |
 
 ### Schema
 
