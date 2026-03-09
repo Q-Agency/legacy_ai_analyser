@@ -17,14 +17,24 @@ derived from the existing codebase.
 
 ## Installation
 
-### Option A — Cursor Marketplace (recommended)
+### Option A — Direct URL install (recommended)
+
+Run this command in Cursor agent chat:
+
+```
+/add-plugin https://github.com/zlatkomq/legacy_ai_analyser
+```
+
+Then run the project setup step below.
+
+### Option B — Cursor Marketplace
 
 1. Open the Marketplace panel in Cursor
 2. Search **constitution-generator**
 3. Install (project-scoped or user-level)
 4. Run the project setup step below
 
-### Option B — Manual (non-plugin)
+### Option C — Manual (non-plugin)
 
 Use the `non-plugin` branch and `install.sh`:
 
