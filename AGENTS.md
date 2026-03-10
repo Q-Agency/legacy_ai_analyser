@@ -9,7 +9,7 @@ spec, design, task composition, development, and QA.
 **When asked to generate, analyse, or update the codebase constitution:**
 → Use the `/constitution` skill (or read and follow `skills/constitution/SKILL.md`).
 → Do NOT improvise or write a constitution directly. The skill defines a
-  Prepare → Scan → Audit → Aggregate → Curate pipeline with parallel subagents.
+  Prepare → Scan → Audit → Human Q&A → Aggregate → Curate pipeline with parallel subagents.
 → Requires Cursor 2.4+ (parallel subagents).
 → Monorepo/workspace projects are auto-detected (pnpm, npm, nx, turbo, lerna).
 → Pipeline progress is tracked via `_status-*.json` files in `.cursor/constitution-tmp/`.

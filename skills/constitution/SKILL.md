@@ -333,11 +333,13 @@ Update `_pipeline.json` → `"phase": "complete"`.
 4. Verify `docs/ai/constitution-viewer.html` exists
 5. Report section count and word estimate for full analysis and CONSTITUTION.md
 6. Report: "Viewer available at docs/ai/constitution-viewer.html — open in browser"
-6. Ask: "Would you like to expand any section or re-run specific analysts?"
-7. Preserve `_corrections.json`: if `.cursor/constitution-tmp/_corrections.json` exists,
+7. If any section has confidence `low` or `needs_human_review`, list those sections
+   by name and confidence level so the user knows what still needs attention
+8. Ask: "Would you like to expand any section or re-run specific analysts?"
+9. Preserve `_corrections.json`: if `.cursor/constitution-tmp/_corrections.json` exists,
    ensure `docs/ai/constitution-corrections.json` is up to date before any cleanup
-8. Report correction count: if corrections exist, report how many were applied during this run
-9. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
+10. Report correction count: if corrections exist, report how many were applied during this run
+11. Offer to clean up: `rm -rf .cursor/constitution-tmp/`
    (keep `docs/ai/constitution-fragments/` and `docs/ai/constitution-corrections.json`
    — these are useful for re-runs)
 

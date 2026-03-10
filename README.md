@@ -4,15 +4,9 @@ A Cursor plugin that analyses a brownfield codebase and produces
 `docs/ai/CONSTITUTION.md` — a compact cornerstone for downstream AI workflows —
 backed by a detailed `docs/ai/full-analysis-YYYY-MM-DD.md` reference document.
 
-The constitution grounds later stages:
-- spec creation (`what` should change)
-- design (`how` the change fits the current system)
-- task composition
-- development
-- QA
-
-It does not replace spec or design. It gives those stages a brownfield baseline
-derived from the existing codebase.
+The constitution grounds later stages (spec, design, tasks, dev, QA) by giving
+them a brownfield baseline derived from the existing codebase. It does not replace
+spec or design — it defines **WITHIN WHAT** those stages operate.
 
 ---
 
@@ -26,14 +20,11 @@ Run this command in Cursor agent chat:
 /add-plugin https://github.com/zlatkomq/legacy_ai_analyser
 ```
 
-Then run the project setup step below.
-
 ### Option B — Cursor Marketplace
 
 1. Open the Marketplace panel in Cursor
 2. Search **constitution-generator**
 3. Install (project-scoped or user-level)
-4. Run the project setup step below
 
 ### Option C — Manual (non-plugin)
 
@@ -49,87 +40,73 @@ bash /path/to/legacy_ai_analyser/install.sh
 
 ---
 
-## Project setup (both options)
+## Quick start
 
-After installing the plugin, run this one-time setup in your target project:
+**Prerequisites:** Cursor 2.4+ and an existing codebase to analyse.
 
-```bash
-# Copy baseline .cursorignore (if you don't have one already)
-cp /path/to/plugin/.cursorignore .cursorignore
-```
-
-Then open the project in Cursor and type in agent chat:
-
-```
-Generate a constitution for this codebase
-```
-
----
-
-## After installing
-
-### Step 1 — Run the analysis
-
-Open your legacy project in Cursor. In agent chat, run:
+1. Install the plugin (see above)
+2. Open your **target project** in Cursor (the brownfield codebase, not the plugin repo)
+3. In agent chat, run:
 
 ```
 /constitution
 ```
 
-This triggers the full analysis pipeline. The agent will:
-1. Check and generate `.cursorignore` (excludes noise from analysis)
+The pipeline will:
+1. Generate `.cursorignore` (excludes noise from analysis)
 2. Scan the codebase with parallel specialist agents
 3. Audit findings for consistency and confidence
-4. Ask you targeted questions to fill gaps the analysis couldn't resolve (skippable)
-5. Aggregate and curate the final outputs
+4. Ask you targeted questions to fill gaps (skippable)
+5. Produce the final outputs
 
-### Step 2 — Review the output
+### What it produces
 
 Once complete, four files are written into your project:
 
-- `docs/ai/CONSTITUTION.md` — the compact cornerstone (~600-800 words) for all downstream agents
-- `docs/ai/constitution.json` — machine-readable constitution for downstream agent lookups
-- `docs/ai/full-analysis-YYYY-MM-DD.md` — the detailed 13-section reference document
-- `docs/ai/constitution-viewer.html` — interactive browser UI (see below)
+| File | Purpose |
+|------|---------|
+| `docs/ai/CONSTITUTION.md` | Compact cornerstone (~600-800 words) — DO/DO NOT rules, patterns, naming, tech stack |
+| `docs/ai/constitution.json` | Machine-readable version for structured lookups |
+| `docs/ai/full-analysis-YYYY-MM-DD.md` | Detailed 13-section reference with confidence and evidence |
+| `docs/ai/constitution-viewer.html` | Interactive browser UI of the full analysis |
 
-#### The interactive viewer
+### How to use it
 
-Open `docs/ai/constitution-viewer.html` directly in any browser — no server needed, no dependencies.
+**Primary use:** Paste `CONSTITUTION.md` as **preamble / guardrails** in the prompt
+for your downstream agents (spec, design, tasks, dev, QA) so the AI respects the
+project's constraints, patterns, and DO/DO NOT rules.
 
-It gives you:
-- A searchable sidebar with all 13 constitution sections
-- Colour-coded confidence badges per section (green / amber / red)
-- HTTP method badges on endpoint tables
-- Highlighted `[NEEDS REVIEW]` warnings
-- Technical debt register with AI-risk levels
-- Sensitive zones with human review flags
-- DO / DO NOT rules in a split-column layout
+```
+You are a [spec/design/implementation/QA] agent.
 
-This is the easiest way to review the full analysis before using the constitution as a downstream base. Share it with your team as a single HTML file.
+Read the project constitution below. It defines the constraints, patterns,
+and rules of the existing system. Your work must respect these.
 
-Check sections marked `[NEEDS REVIEW]` — these are areas where the analysis found low confidence or contested claims. Human validation is needed before relying on them downstream.
+<constitution>
+{paste contents of docs/ai/CONSTITUTION.md here}
+</constitution>
 
-### Step 3 — Use it in your workflow
+Now: [your actual task prompt]
+```
 
-**Primary use:** Use `CONSTITUTION.md` as **preamble / guardrails** in the prompt for
-your downstream agents (spec, design, tasks, dev, QA). Paste it (or the relevant part)
-into the system prompt or context so the AI respects the project’s constraints, patterns,
-and DO/DO NOT rules.
-
-- **Spec** — constitution in preamble so the AI understands current constraints before writing the spec
-- **Design** — constitution in preamble so the AI respects architecture and patterns
-- **Tasks / Dev / QA** — same: constitution as preamble so outputs stay within guardrails
-
-Optional: for deep dives use `docs/ai/full-analysis-*.md`; for structured lookups use
-`docs/ai/constitution.json`. See [docs/DOWNSTREAM-GUIDE.md](docs/DOWNSTREAM-GUIDE.md) for
+Optional: for deep dives use `full-analysis-*.md`; for structured lookups use
+`constitution.json`. See [docs/DOWNSTREAM-GUIDE.md](docs/DOWNSTREAM-GUIDE.md) for
 full integration patterns when you need them.
+
+### Review tips
+
+- Open `docs/ai/constitution-viewer.html` in a browser for an interactive view
+  (searchable sidebar, confidence badges, DO/DO NOT split layout, debt register)
+- Check sections marked `[NEEDS REVIEW]` — human validation needed before relying
+  on those downstream
+- Share the viewer with your team as a single HTML file
 
 ### Keeping it up to date
 
 | Situation | Command |
 |-----------|---------|
 | Code changed significantly | `/constitution` — full re-run |
-| You found an error in the constitution | `/constitution-patch` — corrects a specific claim, survives re-runs |
+| You found an error | `/constitution-patch` — corrects a specific claim, survives re-runs |
 
 ---
 
@@ -157,30 +134,9 @@ constitution-generator/
 │   └── DOWNSTREAM-GUIDE.md                 ← Integration patterns for downstream agents
 ├── rules/
 │   └── constitution-mode.mdc               ← Pipeline discipline rules
-├── .cursorignore                           ← Baseline exclusions template (copy to your project)
+├── .cursorignore                           ← Baseline exclusions template
 └── install.sh                              ← Manual install script (non-plugin branch)
 ```
-
----
-
-## Requirements
-
-- **Cursor 2.4+** required (parallel subagent support)
-- An existing codebase to analyse
-- Monorepo/workspace projects supported (pnpm, npm, nx, turbo, lerna)
-
----
-
-## What it produces (in your project)
-
-- `docs/ai/CONSTITUTION.md` — compact cornerstone (~600-800 words) with DO/DO NOT rules,
-  tech stack, patterns, naming, and testing rules for all downstream agents.
-  Fixed 10-section structure that downstream agents can depend on.
-- `docs/ai/constitution.json` — machine-readable constitution for structured lookups
-  (ORM, auth strategy, DO/DO NOT rules, tech stack, etc.)
-- `docs/ai/full-analysis-YYYY-MM-DD.md` — full 13-section analysis with section-level
-  confidence, evidence sources, and downstream-use guidance
-- `docs/ai/constitution-viewer.html` — self-contained interactive browser UI of the full analysis
 
 ---
 
@@ -253,6 +209,26 @@ flowchart TD
 - Monorepo scaling: wave execution for large workspaces
 
 Estimated time: 10–25 min depending on codebase size.
+
+---
+
+## Troubleshooting
+
+| Problem | Fix |
+|---------|-----|
+| Agent failed during scan | The orchestrator will offer to retry. If it persists, re-run `/constitution` |
+| CONSTITUTION.md has an error | Use `/constitution-patch` — the correction survives re-runs |
+| Run is very slow | Check `.cursorignore` — make sure `node_modules`, `dist`, `build`, lock files are excluded |
+| Overall confidence is "low" | Answer the Human Q&A questions; re-run agents the auditor flagged |
+| Output looks incomplete | Check the viewer for `[NEEDS REVIEW]` sections; use `/constitution-patch` to add missing info |
+
+---
+
+## Requirements
+
+- **Cursor 2.4+** required (parallel subagent support)
+- An existing codebase to analyse
+- Monorepo/workspace projects supported (pnpm, npm, nx, turbo, lerna)
 
 ---
 

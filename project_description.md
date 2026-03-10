@@ -91,9 +91,10 @@ ORCHESTRATOR (main Cursor agent)
 ├─── CURATE PHASE
 │    skills/constitution-curator/SKILL.md
 │    Produces:
-│      docs/ai/CONSTITUTION.md          (compact cornerstone)
+│      docs/ai/CONSTITUTION.md              (compact cornerstone)
+│      docs/ai/constitution.json            (machine-readable)
 │      docs/ai/full-analysis-YYYY-MM-DD.md  (detailed reference)
-│      docs/ai/constitution-viewer.html (interactive browser UI)
+│      docs/ai/constitution-viewer.html     (interactive browser UI)
 │
 └─── CORRECTION LOOP (on-demand)
      skills/constitution-patch/SKILL.md
